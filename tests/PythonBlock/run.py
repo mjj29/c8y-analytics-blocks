@@ -8,7 +8,7 @@ from apamax.analyticsbuilder.basetest import AnalyticsBuilderBaseTest
 
 class PySysTest(AnalyticsBuilderBaseTest):
 	def execute(self):
-		self.correlator = self.startAnalyticsBuilderCorrelator(blockSourceDir=f'{self.project.SOURCE}/blocks/', config=f"{self.project.SOURCE}/blocks/Python/plugin.yaml")
+		self.correlator = self.startAnalyticsBuilderCorrelator(blockSourceDir=f'{self.project.SOURCE}/blocks/', arguments=["--config", f"{self.project.SOURCE}/blocks/Python/plugin.yaml"])
 		
 		self.modelId = self.createTestModel('apamax.analyticsbuilder.samples.Python', {
 			'expression':"""
