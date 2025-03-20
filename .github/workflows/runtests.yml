@@ -16,6 +16,9 @@ jobs:
       ANALYTICS_BUILDER_SDK: ${{ github.workspace }}/analytics-builder-block-sdk
 
     steps:
+      - name: Install tar
+        run: |
+          microdnf install -y tar && microdnf clean all
       # Step 1: Check out the current repository
       - name: Checkout this repository
         uses: actions/checkout@v4
