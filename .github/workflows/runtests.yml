@@ -18,7 +18,7 @@ jobs:
     steps:
       - name: Install tar
         run: |
-          microdnf install -y tar && microdnf clean all
+          microdnf install -y tar gzip && microdnf clean all
       # Step 1: Check out the current repository
       - name: Checkout this repository
         uses: actions/checkout@v4
