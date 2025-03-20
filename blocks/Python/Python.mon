@@ -18,7 +18,7 @@ event Python_$Parameters
 	/**
 	 * Python expression
 	 * NOTE: switch to pab_codeEditor when available
-	 * @$semanticType pab_multiline
+	 * @$semanticType pab_multiLine
 	 */
 	string expression;
 	/** 
