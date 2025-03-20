@@ -34,5 +34,5 @@ jobs:
       - name: Run PySys tests
         run: |
           cd tests
-          pysys run
+          pysys run -v debug
 
