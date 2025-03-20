@@ -27,7 +27,7 @@ jobs:
       - name: Checkout second repository
         uses: actions/checkout@v4
         with:
-          repository: https://github.com/Cumulocity-IoT/apama-analytics-builder-block-sdk
+          repository: Cumulocity-IoT/apama-analytics-builder-block-sdk
           path: analytics-builder-block-sdk
 
       # Step 3: Run the command in the tests/ directory of the first repo
