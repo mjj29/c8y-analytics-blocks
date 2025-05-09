@@ -17,8 +17,7 @@ event Python_$Parameters
 	import "PythonBlockPlugin" as plugin;
 	/**
 	 * Python expression
-	 * NOTE: switch to pab_codeEditor when available
-	 * @$semanticType pab_multiLine
+	 * @$semanticType pab_codeEditor
 	 */
 	string expression;
 	/** 
