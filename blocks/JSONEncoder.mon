@@ -1,0 +1,45 @@
+/*
+ * Copyright (c) 2013-present Cumulocity GmbH, Duesseldorf, Germany and/or its affiliates and/or their licensors.
+ * Use, reproduction, transfer, publication or disclosure is prohibited except as specifically provided for in your License Agreement with Cumulocity GmbH
+ */
+ 
+package apamax.analyticsbuilder.samples;
+
+using apama.analyticsbuilder.BlockBase;
+using apama.analyticsbuilder.Activation;
+using apama.analyticsbuilder.Value;
+using com.apama.json.JSONPlugin;
+
+/**
+ * JSON Encoder block.
+ *
+ * Takes an object and encodes it as a JSON string.
+ *
+ * @$blockCategory Calculations
+ */
+event JSONEncoder
+{
+	/**BlockBase object.
+	 *
+	 * This is initialized by the framework when the block is required for a model.
+	 */
+	BlockBase $base;
+	
+	/**
+	 * This action receives the input values and contains the logic of the block. 
+	 *
+	 * @param $activation The current activation, contextual information required when generating a block output. Blocks should only use the
+	 * <tt>Activation</tt> object passed to them from the framework, never creating their own or holding on to an <tt>Activation</tt> object.
+	 * @param $input_json JSON Input.
+	 *
+	 * @$inputName json json
+	 */
+	action $process(Activation $activation, Value $input_json) {
+		setOutput($activation, JSONPlugin.toJSON($input_json.value));
+	}
+	
+	/**
+	 * Encoded JSON String
+	 */
+	action<Activation,Value> $setOutput_string;		// This is initialized by the framework. It sets the output of the block and may trigger any blocks connected to this output.
+}
