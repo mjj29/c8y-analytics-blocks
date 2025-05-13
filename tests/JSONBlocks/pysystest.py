@@ -2,6 +2,10 @@
 #  Copyright (c) 2019-present Cumulocity GmbH, Duesseldorf, Germany and/or its affiliates and/or their licensors.
 #   This file is licensed under the Apache 2.0 license - see https://www.apache.org/licenses/LICENSE-2.0
 #
+
+__pysys_title__ = r'JSON Encoder/Decoder: to check the basic working of the block'
+__pysys_purpose__ = r''
+
 import json
 from pysys.constants import *
 from apamax.analyticsbuilder.basetest import AnalyticsBuilderBaseTest

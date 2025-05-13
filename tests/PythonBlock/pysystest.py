@@ -3,6 +3,9 @@
 #   This file is licensed under the Apache 2.0 license - see https://www.apache.org/licenses/LICENSE-2.0
 #
 
+__pysys_title__ = r'Python block: to check the basic working of the block'
+__pysys_purpose__ = r''
+
 from pysys.constants import *
 from apamax.analyticsbuilder.basetest import AnalyticsBuilderBaseTest
 
