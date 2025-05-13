@@ -35,7 +35,9 @@ event JSONEncoder
 	 * @$inputName json json
 	 */
 	action $process(Activation $activation, Value $input_json) {
-		setOutput($activation, JSONPlugin.toJSON($input_json.value));
+		Value result := new Value;
+		result.value := JSONPlugin.toJSON($input_json.properties);
+		$setOutput_string($activation, result);
 	}
 	
 	/**
