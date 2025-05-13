@@ -36,11 +36,9 @@ event JSONDecoder
 	 * @$inputName string Encoded JSON string.
 	 */
 	action $process(Activation $activation, Value $input_string) {
-		log "JSONDecoder: input_string = " + $input_string.value;
 		Value result := new Value;
 		result.value := true;
 		result.properties := <dictionary<string, any>> Fn.mapKeys(JSONPlugin.fromJSON(<string>$input_string.value), Fn.toType("string"));
-		log "JSONDecoder: result = " + result.value;
 		$setOutput_json($activation, result);
 	}
 	

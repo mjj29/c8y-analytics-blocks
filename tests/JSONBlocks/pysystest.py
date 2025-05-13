@@ -27,8 +27,6 @@ class PySysTest(AnalyticsBuilderBaseTest):
 							  self.timestamp(3),
 							  )
 
-		self.correlator.waitForLogGrep("JSONDecoder: input_string")
-
 
 	def validate(self):
 		# Verifying that there are no errors in log file.
