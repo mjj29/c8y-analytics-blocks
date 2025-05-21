@@ -18,20 +18,17 @@ event PropertyMapper_$Parameters
 	/**
 	  Value output mapping.
 	*/
-	string valueOutputMapping;
+	optional<string> valueOutputMapping;
 	/**
 	  External ID output mapping.
 	*/
-	string externalIdOutputMapping;
+	optional<string> externalIdOutputMapping;
 	/**
 	  Properties output mapping.
 
 	  @$semanticType pab_multiLine
 	*/
-	string propertiesOutputMapping;
-
-	action $validate() {
-	}
+	optional<string> propertiesOutputMapping;
 }
 
 event AnySetter
@@ -95,10 +92,10 @@ event PropertyMapper
 		Value outputValue := new Value;
 		Value externalId := new Value;
 
-		processSingleMapping($parameters.valueOutputMapping, value, properties, outputValue);
-		processSingleMapping($parameters.externalIdOutputMapping, value, properties, externalId);
+		processSingleMapping($parameters.valueOutputMapping.getOr(""), value, properties, outputValue);
+		processSingleMapping($parameters.externalIdOutputMapping.getOr(""), value, properties, externalId);
 		string s;
-		for s in "\n".split($parameters.propertiesOutputMapping) {
+		for s in "\n".split($parameters.propertiesOutputMapping.getOr("")) {
 			Value tmpValue := new Value;
 			string key := processSingleMapping(s, value, properties, tmpValue);
 			if (key != "") {

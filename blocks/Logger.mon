@@ -20,7 +20,7 @@ event Logger_$Parameters
 	  
 	  For identifying messages from this block.
 	*/
-	string loggerTag;
+	optional<string> loggerTag;
 	/**
 	  Log level.
 	  
@@ -45,10 +45,6 @@ event Logger_$Parameters
 	  Log the message at ERROR. Will cause an alarm to be raised.
 	*/
 	constant string logLevel_ERROR := "ERROR";
-
-	action $validate() {
-		BlockBase.throwsOnEmpty(logLevel, "logLevel", self);
-	}
 }
 
 /**
@@ -85,15 +81,15 @@ event Logger
 
 		if $parameters.logLevel = $parameters.logLevel_ERROR {
 			// Log the message at ERROR. Will cause an alarm to be raised.
-			log "[" + $parameters.loggerTag + "] " + $input_input.value.toString() + " (" + $input_input.properties.toString() + ")" at ERROR;
+			log "[" + $parameters.loggerTag.getOr("logger") + "] " + $input_input.value.toString() + " (" + $input_input.properties.toString() + ")" at ERROR;
 		}
 		else if $parameters.logLevel = $parameters.logLevel_DEBUG {
 			// Log the message at DEBUG. Will not appear in the log by default.
-			log "[" + $parameters.loggerTag + "] " + $input_input.value.toString() + " (" + $input_input.properties.toString() + ")" at DEBUG;
+			log "[" + $parameters.loggerTag.getOr("logger") + "] " + $input_input.value.toString() + " (" + $input_input.properties.toString() + ")" at DEBUG;
 		}
 		else {
 			// Log the message at INFO.
-			log "[" + $parameters.loggerTag + "] " + $input_input.value.toString() + " (" + $input_input.properties.toString() + ")" at INFO;
+			log "[" + $parameters.loggerTag.getOr("logger") + "] " + $input_input.value.toString() + " (" + $input_input.properties.toString() + ")" at INFO;
 		}
 	}
 }
