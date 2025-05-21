@@ -12,7 +12,7 @@ using com.apama.json.JSONPlugin;
 using com.apama.functional.Fn;
 
 /**
- * JSON Decoder block.
+ * JSON Decoder.
  *
  * Takes an JSON string and decodes it to properties.
  *

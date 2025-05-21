@@ -48,7 +48,7 @@ event Logger_$Parameters
 }
 
 /**
- * Logger block.
+ * Logger.
  *
  * Writes a message to the log file for each input.
  * 

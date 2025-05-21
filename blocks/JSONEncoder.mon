@@ -11,7 +11,7 @@ using apama.analyticsbuilder.Value;
 using com.apama.json.JSONPlugin;
 
 /**
- * JSON Encoder block.
+ * JSON Encoder.
  *
  * Takes an object and encodes it as a JSON string.
  *

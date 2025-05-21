@@ -55,7 +55,7 @@ event AnySetter
 }
 
 /**
- * Property mapper block.
+ * Property Mapper.
  *
  * Map multiple properties to output and property values.
  * 
