@@ -29,6 +29,9 @@ event PropertyMapper_$Parameters
 	  @$semanticType pab_multiLine
 	*/
 	string propertiesOutputMapping;
+
+	action $validate() {
+	}
 }
 
 event AnySetter

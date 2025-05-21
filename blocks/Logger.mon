@@ -45,6 +45,10 @@ event Logger_$Parameters
 	  Log the message at ERROR. Will cause an alarm to be raised.
 	*/
 	constant string logLevel_ERROR := "ERROR";
+
+	action $validate() {
+		BlockBase.throwsOnEmpty(period, "logLevel", self);
+	}
 }
 
 /**
@@ -52,7 +56,7 @@ event Logger_$Parameters
  *
  * Writes a message to the log file for each input.
  * 
- * @$blockCategory Utility
+ * @$blockCategory Utilities
  */
 event Logger
 {
