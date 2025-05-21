@@ -7,6 +7,22 @@ This repo contains the following blocks
 
 This block allows expressions written in a restricted subset of python to be defined in an analytics builder model.
 
+## JSON encoder/decoder blocks
+
+These blocks convert between a string value in encoded JSON form, to a decoded value sent in the output properties
+
+## Logger block
+
+This block will take an input and log it to the log file
+
+## Property Mapper block
+
+This block will take the input value and properties and allow you to map the fields to the output value and output properties
+
+## Device Simulator block
+
+This block simulates a device producing arbitrary-format data by periodically generating the provided string into the model
+
 ## Adding custom blocks as extensions
 
 To use these blocks you should install the [Analytics Management](https://github.com/Cumulocity-IoT/cumulocity-analytics-management) plug-in to your Cumulocity environment, and then link it to this repository using the [https://github.com/mjj29/c8y-analytics-blocks/tree/main/blocks/](https://github.com/mjj29/c8y-analytics-blocks/tree/main/blocks/) directory.
