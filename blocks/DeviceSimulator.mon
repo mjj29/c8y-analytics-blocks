@@ -1,0 +1,45 @@
+package apamax.analyticsbuilder.samples;
+using apama.analyticsbuilder.BlockBase;
+using apama.analyticsbuilder.InputParams;
+using apama.analyticsbuilder.InputHandler;
+using apama.analyticsbuilder.Value;
+using apama.analyticsbuilder.Activation;
+
+event DeviceSimulator_$Parameters {
+	float period;
+	string testData;
+	action $validate() {
+		BlockBase.throwsOnEmpty(period, "period", self);
+		BlockBase.throwsOnEmpty(testData, "testData", self);
+	}
+}
+
+/** Simulate arbitrary format device messages
+  
+  @$blockCategory Input
+*/
+event DeviceSimulator
+{
+	BlockBase $base;
+	DeviceSimulator_$Parameters $parameters;
+	InputHandler inputHandler;
+	constant string $OUTPUT_TYPE_value := "pulse";
+	action<Activation,Value> $setOutput_value;
+
+	action $validate() {
+	}
+	action $timerTriggered(Activation $activation, any $payload)
+	{
+		Value v := new Value;
+		v.value := $parameters.testData;
+		v.timestamp := $activation.timestamp;
+		$setOutput_value($activation, v);
+		$base.createTimer($parameters.period, new any);
+	}
+
+	action $init() {
+		$base.createTimer($parameters.period, new any);
+	}
+
+
+}
