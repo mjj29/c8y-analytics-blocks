@@ -22,18 +22,19 @@ class PySysTest(AnalyticsBuilderBaseTest):
 if input0 and input1:
 	output0 = abs(input0 - input1)
 	output1 = input0 - input1
+	output3 = str({'value1': properties0['value1'], 'value2': properties1['value2']})
 	generate = True
 """
 		})
 		
 		self.sendEventStrings(self.correlator,
-							  self.timestamp(1),
-							  self.inputEvent('value1', 12.25, id = self.modelId),
-							  self.timestamp(2),
-							  self.inputEvent('value2', 7.75, id = self.modelId),  #absolute Output at this point would be 4.5 (12.25-7.75)
-							  self.timestamp(2.1),
-							  self.inputEvent('value2', 17.25, id=self.modelId),  #signed Output at this point would be -5 (12.25-17.25)
-							  self.timestamp(2.5),
+								self.timestamp(1),
+								self.inputEvent('value1', 12.25, id = self.modelId, properties={'value1': 'value'}),
+								self.timestamp(2),
+								self.inputEvent('value2', 7.75, id = self.modelId, properties={'value2': 'value'}),  #absolute Output at this point would be 4.5 (12.25-7.75)
+								self.timestamp(2.1),
+								self.inputEvent('value2', 17.25, id=self.modelId, properties={'value2': 'value'}),  #signed Output at this point would be -5 (12.25-17.25)
+								self.timestamp(2.5),
 							  )
 
 
@@ -47,3 +48,4 @@ if input0 and input1:
 		# Verifying the result - output from the block.
 		self.assertBlockOutput('result1', [4.5, 5])
 		self.assertBlockOutput('result2', [4.5, -5])
+		self.assertBlockOutput('result3', ["{'value1': 'value', 'value2': 'value'}", "{'value1': 'value', 'value2': 'value'}"])
