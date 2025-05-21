@@ -27,6 +27,8 @@ class PySysTest(AnalyticsBuilderBaseTest):
 							  self.timestamp(1),
 							  self.timestamp(2),
 							  self.timestamp(3),
+							  self.timestamp(4),
+							  self.timestamp(5),
 							  )
 
 
@@ -37,5 +39,5 @@ class PySysTest(AnalyticsBuilderBaseTest):
 		# Verifying that the model is deployed successfully.
 		self.assertGrep(self.analyticsBuilderCorrelator.logfile, expr='Model \"' + self.modelId + '\" with PRODUCTION mode has started')
 	
-		self.assertBlockOutput('value', ['{"a": [1, 2, 3]}'])
+		self.assertBlockOutput('value', ['{"a": [1, 2, 3]}','{"a": [1, 2, 3]}'])
 

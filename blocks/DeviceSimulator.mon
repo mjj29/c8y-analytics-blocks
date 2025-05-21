@@ -1,7 +1,6 @@
 package apamax.analyticsbuilder.samples;
 using apama.analyticsbuilder.BlockBase;
-using apama.analyticsbuilder.InputParams;
-using apama.analyticsbuilder.InputHandler;
+using apama.analyticsbuilder.TimerParams;
 using apama.analyticsbuilder.Value;
 using apama.analyticsbuilder.Activation;
 
@@ -24,7 +23,6 @@ event DeviceSimulator
 {
 	BlockBase $base;
 	DeviceSimulator_$Parameters $parameters;
-	InputHandler inputHandler;
 	constant string $OUTPUT_TYPE_value := "pulse";
 	action<Activation,Value> $setOutput_value;
 
@@ -36,11 +34,10 @@ event DeviceSimulator
 		v.value := $parameters.testData;
 		v.timestamp := $activation.timestamp;
 		$setOutput_value($activation, v);
-		$base.createTimer($parameters.period, new any);
 	}
 
 	action $init() {
-		$base.createTimer($parameters.period, new any);
+		$base.createTimerWith(TimerParams.recurring($parameters.period));
 	}
 
 
