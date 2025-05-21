@@ -3,7 +3,7 @@
 #   This file is licensed under the Apache 2.0 license - see https://www.apache.org/licenses/LICENSE-2.0
 #
 
-__pysys_title__ = r'Property Mapper: to check the basic working of the block'
+__pysys_title__ = r'Device Simulator: to check the basic working of the block'
 __pysys_purpose__ = r''
 
 import json

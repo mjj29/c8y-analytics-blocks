@@ -14,7 +14,9 @@ event DeviceSimulator_$Parameters {
 	}
 }
 
-/** Simulate arbitrary format device messages
+/** Device Message Simulator.
+
+  Simulate arbitrary format device messages
   
   @$blockCategory Input
 */
