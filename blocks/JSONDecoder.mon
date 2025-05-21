@@ -14,7 +14,7 @@ using com.apama.functional.Fn;
 /**
  * JSON Decoder block.
  *
- * Takes an object and encodes it as a JSON string.
+ * Takes an JSON string and decodes it to properties.
  *
  * @$blockCategory Calculations
  */
