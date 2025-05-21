@@ -47,7 +47,7 @@ event Logger_$Parameters
 	constant string logLevel_ERROR := "ERROR";
 
 	action $validate() {
-		BlockBase.throwsOnEmpty(period, "logLevel", self);
+		BlockBase.throwsOnEmpty(logLevel, "logLevel", self);
 	}
 }
 
