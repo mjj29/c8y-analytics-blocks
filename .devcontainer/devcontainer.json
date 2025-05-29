@@ -1,0 +1,24 @@
+{
+	"name": "cumulocity-streaming-analytics-development",
+	"build": {
+		"dockerfile": "Dockerfile",
+		"args": { 
+			"APAMA_IMAGE": "public.ecr.aws/apama/apama-builder",
+			"APAMA_VERSION": "latest",
+			"APAMA_ANALYTICS_BUILDER_SDK_BRANCH": "main",
+			"APAMA_EPLAPPS_TOOLS_BRANCH": "main"
+		}
+	},
+	"customizations": {
+		"vscode": {
+			"extensions": [
+				"apamacommunity.apama-extensions",
+				"ms-python.python"
+			]
+		}
+	},
+	"forwardPorts": [15904],
+	"overrideCommand": true,
+	"remoteUser": "apama",
+	"containerUser": "apama"
+}
