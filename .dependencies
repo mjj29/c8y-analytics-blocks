@@ -84,5 +84,19 @@
 			<evt-files>
 			</evt-files>
 		</bundle>
+		<bundle file="../../apama-analytics-builder-block-sdk/bundles/AnalyticsBuilder.bnd" origin-path="" origin="PROJECT_RELATIVE">
+			<instance name=""/>
+			<config-files>
+			</config-files>
+			<bundle-instance-files>
+			</bundle-instance-files>
+			<static-files>
+			</static-files>
+			<dashboard-files>
+			</dashboard-files>
+			<evt-files>
+				<file name="${APAMA_HOME}/monitors/AutomaticOnApplicationInitialized.evt" timestamp="1748472147000"/>
+			</evt-files>
+		</bundle>
 	</bundles>
 </apama-project>
