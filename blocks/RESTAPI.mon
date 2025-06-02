@@ -25,6 +25,8 @@ event RESTAPI_$Parameters {
 	string authMethod;
 	/** The HTTP Method. */
 	string httpMethod;
+	/** Request immediately after the block is initialized. */
+	boolean requestImmediately;
 	/** The HTTP Method GET. */
 	constant string httpMethod_get := "GET";
 	/** The HTTP Method PUT. */
@@ -105,7 +107,9 @@ event RESTAPI
 	{
 		createTransport();
 		$base.createTimerWith(TimerParams.recurring($parameters.period));
-		inputHandler.scheduleNow(new any, new any);
+		if $parameters.requestImmediately {
+			inputHandler.scheduleNow(new any, new any);
+		}
 	}
 
 	action createTransport()
