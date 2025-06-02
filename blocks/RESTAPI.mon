@@ -132,7 +132,6 @@ event RESTAPI
 
 	action $timerTriggered(Activation $activation, any $payload)
 	{
-		log "Timer triggered with payload: "+ $payload;
 		if $payload.empty() {
 			HttpOptions options := new HttpOptions;
 			options.headers["Accept"] := "application/json";
@@ -145,7 +144,6 @@ event RESTAPI
 				actualBody := JSONPlugin.fromJSON(body);
 			}
 			Request req := transport.createRequest($parameters.httpMethod, url, actualBody, options);
-			log "Sending request" + req;
 			req.execute(handleResponse);
 		} else {
 			Value v := new Value;
@@ -155,7 +153,6 @@ event RESTAPI
 		}
 	}
 	action handleResponse(Response response) {
-		log "Received response: " + response;
 		inputHandler.scheduleNow(response, new any);
 	}
 }
