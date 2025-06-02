@@ -42,16 +42,19 @@ class PySysTest(AnalyticsBuilderBaseTest):
 	def execute(self):
 		self.correlator = self.startAnalyticsBuilderCorrelator(blockSourceDir=f'{self.project.SOURCE}/blocks/', arguments=["--config", f"{self.project.SOURCE}/blocks/Python/plugin.yaml"])
 		
-		self.modelId = self.createTestModel('apamax.analyticsbuilder.samples.RESTAPI', {
-			'period': 2.,
-			'URI': 'http://localhost:8080/foo/bar',
-			'authMethod': 'NONE'
-		})
-
 		with self.start_http_server(PySysTest.SimpleHandler, 8080) as server:
 			self.log.info("HTTP server started at http://localhost:8080")
 		
+			self.modelId = self.createTestModel('apamax.analyticsbuilder.samples.RESTAPI', {
+				'period': 2.,
+				'URI': 'http://localhost:8080/foo/bar',
+				'httpMethod': 'GET',
+				'authMethod': 'NONE'
+			})
+
+		
 			self.sendEventStrings(self.correlator,
+								  self.timestamp(1),
 								  self.timestamp(2),
 								  self.timestamp(3),
 								  )

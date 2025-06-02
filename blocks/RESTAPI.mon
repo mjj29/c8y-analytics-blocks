@@ -66,11 +66,11 @@ event RESTAPI
 	 * 
 	 * @param $activation The current activation, contextual information required when generating a block output. Blocks should only use the
 	 * <tt>Activation</tt> object passed to them from the framework, never creating their own or holding on to an <tt>Activation</tt> object.
-	 * @param $input_pass Update to the password.
-	 * @param $input_body Update to the body.
+	 * @param $input_pass Password.
+	 * @param $input_body Body.
 	 *
-	 * @$inputName pass Update to the password.
-	 * @$inputName body Update to the body.
+	 * @$inputName pass Password.
+	 * @$inputName body Body.
 	 */
 	action $process(Activation $activation, Value $input_pass, Value $input_body) {
 		if not $input_pass.value.empty() {
@@ -105,6 +105,7 @@ event RESTAPI
 	{
 		createTransport();
 		$base.createTimerWith(TimerParams.recurring($parameters.period));
+		inputHandler.scheduleNow(new any, new any);
 	}
 
 	action createTransport()
