@@ -12,6 +12,7 @@ jobs:
       image: public.ecr.aws/apama/apama-builder:latest
 
     env:
+      GITHUB_WORKSPACE: /apama_work
       ANALYTICS_BUILDER_SDK: ${{ github.workspace }}/analytics-builder-block-sdk
 
     steps:
