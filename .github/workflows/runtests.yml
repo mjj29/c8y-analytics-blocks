@@ -10,15 +10,11 @@ jobs:
     runs-on: ubuntu-latest
     container:
       image: public.ecr.aws/apama/apama-builder:latest
-      options: --user 0
 
     env:
       ANALYTICS_BUILDER_SDK: ${{ github.workspace }}/analytics-builder-block-sdk
 
     steps:
-      - name: Install tar
-        run: |
-          apt update && apt install -y tar gzip && apt clean
       # Step 1: Check out the current repository
       - name: Checkout this repository
         uses: actions/checkout@v4
