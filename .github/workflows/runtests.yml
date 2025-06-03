@@ -10,9 +10,9 @@ jobs:
     runs-on: ubuntu-latest
     container:
       image: public.ecr.aws/apama/apama-builder:latest
+      options: --user 0
 
     env:
-      GITHUB_WORKSPACE: /apama_work
       ANALYTICS_BUILDER_SDK: ${{ github.workspace }}/analytics-builder-block-sdk
 
     steps:
