@@ -19,11 +19,14 @@ class PySysTest(AnalyticsBuilderBaseTest):
 		
 		self.modelId = self.createTestModel('apamax.analyticsbuilder.samples.Python', {
 			'expression':"""
-if input0 and input1:
-	output0 = abs(input0 - input1)
-	output1 = input0 - input1
-	output3 = str({'value1': properties0['value1'], 'value2': properties1['value2']})
-	generate = True
+state["counter"] = state.get("counter", 0.) + 1.
+if inputs[0].value and inputs[1].value:
+	outputs[0].value = abs(inputs[0].value - inputs[1].value)
+	outputs[1].value = inputs[0].value - inputs[1].value
+	outputs[2].value = str({'value1': inputs[0].properties['value1'], 'value2': inputs[1].properties['value2']})
+	outputs[3].value = state["counter"]
+else:
+	generate = False
 """
 		})
 		
@@ -49,3 +52,4 @@ if input0 and input1:
 		self.assertBlockOutput('result1', [4.5, 5])
 		self.assertBlockOutput('result2', [4.5, -5])
 		self.assertBlockOutput('result3', ["{'value1': 'value', 'value2': 'value'}", "{'value1': 'value', 'value2': 'value'}"])
+		self.assertBlockOutput('result4', [2, 3])
