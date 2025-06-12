@@ -1,0 +1,146 @@
+/*
+ * Copyright (c) 2013-present Cumulocity GmbH, Duesseldorf, Germany and/or its affiliates and/or their licensors.
+ * Use, reproduction, transfer, publication or disclosure is prohibited except as specifically provided for in your License Agreement with Cumulocity GmbH
+ */
+ 
+package apamax.analyticsbuilder.samples;
+
+using apama.analyticsbuilder.BlockBase;
+using apama.analyticsbuilder.Activation;
+using apama.analyticsbuilder.Value;
+using com.apama.util.AnyExtractor;
+
+/**
+  Parameters for PropertyMapper block.
+*/
+event PropertyMapper_$Parameters
+{
+	/**
+	  Value output mapping.
+	*/
+	optional<string> valueOutputMapping;
+	/**
+	  External ID output mapping.
+	*/
+	optional<string> externalIdOutputMapping;
+	/**
+	  Properties output mapping.
+
+	  @$semanticType pab_multiLine
+	*/
+	optional<string> propertiesOutputMapping;
+}
+
+event AnySetter
+{
+	dictionary<string, any> container;
+	/**
+	  Set a property in the dictionary.
+	*/
+	action set(string key, any value)
+	{
+		dictionary<string, any> tmp := container;
+		sequence<string> keys := ".".split(key);
+		integer i := 0;
+		while (i < keys.size() - 1) {
+			dictionary<string, any> tmp2 := <dictionary<string, any>> tmp.getOr(keys[i], new dictionary<string, any>);
+			tmp[keys[i]] := tmp2;
+			tmp := tmp2;
+			i := i + 1;
+		}
+		if (keys.size() > 0) {
+			tmp[keys[i]] := value;
+		}
+	}
+}
+
+/**
+ * Property Mapper.
+ *
+ * Map multiple properties to output and property values.
+ * 
+ * @$blockCategory Calculations
+ */
+event PropertyMapper
+{
+	/**BlockBase object.
+	 *
+	 * This is initialized by the framework when the block is required for a model.
+	 */
+	BlockBase $base;
+
+	/** Block parameters.
+	 *
+	 * This is initialized by the framework when the block is required for a model.
+	 */
+	PropertyMapper_$Parameters $parameters;
+	
+	/**
+	 * This action receives the input values and contains the logic of the block. 
+	 *
+	 * @param $activation The current activation, contextual information required when generating a block output. Blocks should only use the
+	 * <tt>Activation</tt> object passed to them from the framework, never creating their own or holding on to an <tt>Activation</tt> object.
+	 * @param $input_input A value with attached properties
+	 *
+	 * @$inputName input A value with attached properties
+	 */
+	action $process(Activation $activation, Value $input_input) {
+		any value := $input_input.value;
+		AnyExtractor properties := AnyExtractor($input_input.properties);
+		Value outputProperties := new Value;
+		outputProperties.value := true;
+		Value outputValue := new Value;
+		Value externalId := new Value;
+
+		processSingleMapping($parameters.valueOutputMapping.getOr(""), value, properties, outputValue);
+		processSingleMapping($parameters.externalIdOutputMapping.getOr(""), value, properties, externalId);
+		string s;
+		for s in "\n".split($parameters.propertiesOutputMapping.getOr("")) {
+			Value tmpValue := new Value;
+			string key := processSingleMapping(s, value, properties, tmpValue);
+			if (key != "") {
+				AnySetter(outputProperties.properties).set(key, tmpValue.value);
+			}
+		}
+
+		$setOutput_value($activation, outputValue);
+		$setOutput_externalId($activation, externalId);
+		$setOutput_properties($activation, outputProperties);
+	}
+
+	action processSingleMapping(string mapping, any value, AnyExtractor properties, Value targetValue) returns string
+	{
+		mapping := mapping.ltrim().rtrim();
+		string key := "";
+		if (mapping = "") {
+			return key;
+		}
+		if mapping.contains("=") {
+			key := "=".split(mapping)[0];
+			mapping := "=".split(mapping)[1];
+		}
+		if (mapping = "value") {
+			targetValue.value := value;
+			return key;
+		}
+		any v := properties.getAnyOr(mapping, new any);
+		if not v.empty() {
+			targetValue.value := v;
+			return key;
+		}
+		return "";
+	}
+	
+	/**
+	 * Value output.
+	 */
+	action<Activation,Value> $setOutput_value;	// This is initialized by the framework. It sets the output of the block and may trigger any blocks connected to this output.
+	/**
+	 * External ID output.
+	 */
+	action<Activation,Value> $setOutput_externalId;		// This is initialized by the framework. It sets the output of the block and may trigger any blocks connected to this output.
+	/**
+	 * Properties output.
+	 */
+	action<Activation,Value> $setOutput_properties;	// This is initialized by the framework. It sets the output of the block and may trigger any blocks connected to this output.
+}

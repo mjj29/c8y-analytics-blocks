@@ -75,7 +75,9 @@ event Python
 	 * @$inputName value5 input4
 	 */
 	action $process(Activation $activation, Value $input_value1, Value $input_value2, Value $input_value3, Value $input_value4, Value $input_value5) {
-		sequence<any> results := plugin.execute(compiled_expression, [$input_value1.value, $input_value2.value, $input_value3.value, $input_value4.value, $input_value5.value]);
+		sequence<any> results := plugin.execute(compiled_expression,
+				[$input_value1.value, $input_value2.value, $input_value3.value, $input_value4.value, $input_value5.value],
+				[$input_value1.properties, $input_value2.properties, $input_value3.properties, $input_value4.properties, $input_value5.properties]);
 		if results.size()>0 and <boolean> results[0] {
 			integer i := 1;
 			while i < results.size() and i <= setOutput.size() {

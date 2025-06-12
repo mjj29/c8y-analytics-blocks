@@ -1,0 +1,163 @@
+package apamax.analyticsbuilder.samples;
+using apama.analyticsbuilder.BlockBase;
+using apama.analyticsbuilder.TimerParams;
+using apama.analyticsbuilder.Value;
+using apama.analyticsbuilder.Activation;
+using apama.analyticsbuilder.InputParams;
+using apama.analyticsbuilder.InputHandler;
+using com.softwareag.connectivity.httpclient.HttpTransport;
+using com.softwareag.connectivity.httpclient.HttpOptions;
+using com.softwareag.connectivity.httpclient.Request;
+using com.softwareag.connectivity.httpclient.Response;
+using com.apama.functional.Fn;
+using com.apama.json.JSONPlugin;
+
+event RESTAPI_$Parameters {
+	/** The period in seconds at which to poll the REST API. */
+	float period;
+	/** The URL of the REST API. */
+	string URI;
+	/** The HTTP username. */
+	optional<string> username;
+	/** The HTTP password. */
+	optional<string> password;
+	/** The authentication method to use. */
+	string authMethod;
+	/** The HTTP Method. */
+	string httpMethod;
+	/** Request immediately after the block is initialized. */
+	boolean requestImmediately;
+	/** The HTTP Method GET. */
+	constant string httpMethod_get := "GET";
+	/** The HTTP Method PUT. */
+	constant string httpMethod_post := "POST";
+
+	/** Don't use authentication. */
+	constant string authMethod_none := "NONE";
+	/** Use HTTP Basic authentication. */
+	constant string authMethod_digest := "HTTP_DIGEST";
+	/** Use HTTP Digest authentication. */
+	constant string authMethod_basic := "HTTP_BASIC";
+	/** Use Bearer token authentication. */
+	constant string authMethod_bearer := "BEARER";
+
+}
+
+/** REST API.
+
+  Regularly polls a REST API and returns the result. The value of the result is the status code and the properties contains the parsed JSON response.
+  
+  @$blockCategory Input
+*/
+event RESTAPI
+{
+	BlockBase $base;
+	RESTAPI_$Parameters $parameters;
+	constant string $OUTPUT_TYPE_value := "pulse";
+	action<Activation,Value> $setOutput_value;
+	boolean tls;
+	string hostname;
+	string url;
+	string body;
+	integer port;
+	HttpTransport transport;
+	InputHandler inputHandler;
+
+	/**
+	 * This action updates the password used for API access.
+	 * 
+	 * @param $activation The current activation, contextual information required when generating a block output. Blocks should only use the
+	 * <tt>Activation</tt> object passed to them from the framework, never creating their own or holding on to an <tt>Activation</tt> object.
+	 * @param $input_pass Password.
+	 * @param $input_body Body.
+	 *
+	 * @$inputName pass Password.
+	 * @$inputName body Body.
+	 */
+	action $process(Activation $activation, Value $input_pass, Value $input_body) {
+		if not $input_pass.value.empty() {
+			$parameters.password := <string>$input_pass.value;
+		}
+		if not $input_body.value.empty() {
+			body := <string>$input_body.value;
+		}
+		createTransport();
+	}
+
+	action $validate()
+	{
+		tls := $parameters.URI.startsWith("https://");
+		port := 80;
+		if tls {
+			port := 443;
+		}
+		if $parameters.URI.findFrom(":", $parameters.URI.find("://") + 3) > 0 {
+			port := $parameters.URI.substring($parameters.URI.findFrom(":", $parameters.URI.find("://") + 3) + 1, $parameters.URI.findFrom("/", $parameters.URI.find("://") + 3)).toInteger();
+			hostname := $parameters.URI.substring($parameters.URI.find("://") + 3, $parameters.URI.findFrom(":", $parameters.URI.find("://") + 3));
+		} else {
+			hostname := $parameters.URI.substring($parameters.URI.find("://") + 3, $parameters.URI.findFrom("/", $parameters.URI.find("://") + 3));
+		}
+		url := "/";
+		if $parameters.URI.findFrom("/", $parameters.URI.find("://") + 3) > 0 {
+			url := $parameters.URI.substringFrom($parameters.URI.findFrom("/", $parameters.URI.find("://") + 3));
+		}
+		inputHandler := $base.consumesInput(InputParams.forEventType(Response.getName()));
+	}
+	action $init()
+	{
+		createTransport();
+		$base.createTimerWith(TimerParams.recurring($parameters.period));
+		if $parameters.requestImmediately {
+			inputHandler.scheduleNow(new any, new any);
+		}
+	}
+
+	action createTransport()
+	{
+		if $parameters.authMethod = $parameters.authMethod_bearer {
+			transport := HttpTransport.getOrCreateWithConfigurations(
+					hostname,
+					port,
+					{
+						HttpTransport.CONFIG_TLS: tls.toString()
+					});
+		} else {
+			transport := HttpTransport.getOrCreateWithConfigurations(
+					hostname,
+					port,
+					{
+						HttpTransport.CONFIG_TLS: tls.toString(),
+						HttpTransport.CONFIG_USERNAME: $parameters.username.getOr(""),
+						HttpTransport.CONFIG_PASSWORD: $parameters.password.getOr(""),
+						HttpTransport.CONFIG_AUTH_TYPE: $parameters.authMethod
+					});
+		}
+	}
+
+
+	action $timerTriggered(Activation $activation, any $payload)
+	{
+		if $payload.empty() {
+			HttpOptions options := new HttpOptions;
+			options.headers["Accept"] := "application/json";
+			options.headers["Content-Type"] := "application/json";
+			if $parameters.authMethod = $parameters.authMethod_bearer {
+				options.headers["Authorization"] := "Bearer " + $parameters.password.getOr("");
+			}
+			any actualBody := new any;
+			if body.length() > 0 {
+				actualBody := JSONPlugin.fromJSON(body);
+			}
+			Request req := transport.createRequest($parameters.httpMethod, url, actualBody, options);
+			req.execute(handleResponse);
+		} else {
+			Value v := new Value;
+			v.properties := <dictionary<string,any>> Fn.mapKeys((<Response>$payload).payload.data, Fn.toType("string"));
+			v.value := (<Response>$payload).statusCode.toFloat();
+			$setOutput_value($activation, v);
+		}
+	}
+	action handleResponse(Response response) {
+		inputHandler.scheduleNow(response, new any);
+	}
+}

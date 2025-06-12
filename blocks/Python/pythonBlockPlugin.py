@@ -6,6 +6,7 @@ class PythonBlockPlugin(EPLPluginBase):
 			"__name__": "restricted_python_block",
 			"__metaclass__": type,
 			"_getiter_": Eval.default_guarded_getiter,
+			"_getitem_": Eval.default_guarded_getitem,
 			"_iter_unpack_sequence": Guards.guarded_iter_unpack_sequence,
 		}
 	}
@@ -17,11 +18,12 @@ class PythonBlockPlugin(EPLPluginBase):
 	def validate(self, expression):
 		return compile_restricted(expression, '<inline code>', 'exec')
 
-	@EPLAction("action<chunk, sequence<any>> returns sequence<any>")
-	def execute(self, bytecode, v):
+	@EPLAction("action<chunk, sequence<any>, sequence<dictionary<string, any>>> returns sequence<any>")
+	def execute(self, bytecode, v, props):
 		locals = { "generate": False }
 		for i in range(len(v)):
 			locals['input'+str(i)] = v[i]
+			locals['properties'+str(i)] = props[i]
 		for i in range(10):
 			locals['output'+str(i)] = None
 		exec(bytecode, PythonBlockPlugin.safe_globals, locals)
