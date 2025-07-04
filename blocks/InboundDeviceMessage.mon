@@ -20,6 +20,48 @@ event DeviceInputText_$Parameters {
 	}
 }
 
+event MQTTConnectionRequest
+{
+	constant string SEND_CHANNEL := "MQTTConnectionCache_send";
+	string topic;
+}
+event MQTTConnectionResponse
+{
+	constant string RECEIVE_CHANNEL := "MQTTConnectionCache_receive";
+	string topic;
+}
+monitor MQTTConnectionCache
+{
+	dictionary<string, boolean> subscriptions;
+	action onload()
+	{
+		monitor.subscribe(MQTTConnectionRequest.SEND_CHANNEL);
+		log "DeviceInputText: MQTTConnectionCache loaded.";
+		on all MQTTConnectionRequest() as r {
+			log "DeviceInputText: Received MQTTConnectionRequest for topic: " + r.topic;
+			if (subscriptions.hasKey(r.topic)) {
+				log "DeviceInputText: Found existing subscription for topic: " + r.topic;
+				send MQTTConnectionResponse(r.topic) to MQTTConnectionResponse.RECEIVE_CHANNEL;
+			} else {
+				try {
+					log "DeviceInputText: Checking for existing chain for topic: " + r.topic;
+					Chain c := ConnectivityPlugins.getChainByChannel("receive"+r.topic, "TOWARDS_HOST");
+					subscriptions[r.topic] := true;
+					send MQTTConnectionResponse(r.topic) to MQTTConnectionResponse.RECEIVE_CHANNEL;
+				} catch (Exception e) {
+					MQTTService.createTextSubscription(r.topic, "deviceinputblock", created);
+				}
+			}
+		}
+	}
+	action created(MQTTSubscription sub)
+	{
+		log "DeviceInputText: MQTT subscription created for topic: " + sub.getTopic();
+		subscriptions[sub.getTopic()] := true;
+		send MQTTConnectionResponse(sub.getTopic()) to MQTTConnectionResponse.RECEIVE_CHANNEL;
+	}
+}
+
 /** Device Input Message - text format.
   
   @$blockCategory Input
@@ -48,22 +90,16 @@ event DeviceInputText
 
 	action $init() 
 	{
-		log "DeviceInputText: $init called for topic: " + $parameters.topic;
-		try {
-			Chain c := ConnectivityPlugins.getChainByChannel("receive"+$parameters.topic, "TOWARDS_HOST");
-			initFinalized(MQTTSubscription.create($parameters.topic, "send"+$parameters.topic, "receive"+$parameters.topic, c, "deviceinputblock", new TenantDetails));
-		} catch (Exception e) {
-			MQTTService.createTextSubscription($parameters.topic, "deviceinputblock", initFinalized);
-		}
-	}
-	action initFinalized(MQTTSubscription sub)
-	{
-		log "DeviceInputText: Subscription created for topic: " + sub.getTopic();
-		monitor.subscribe(sub.getSubscribeChannel());
-		on all MQTTServiceMessage(topic=sub.getTopic()) as msg
+		monitor.subscribe(MQTTConnectionResponse.RECEIVE_CHANNEL);
+		send MQTTConnectionRequest($parameters.topic) to MQTTConnectionRequest.SEND_CHANNEL;
+		on MQTTConnectionResponse(topic=$parameters.topic)
 		{
-			inputHandler.scheduleNow(msg, new any);
+			log "DeviceInputText: Subscription created for topic: " + $parameters.topic;
+			monitor.subscribe("receive"+$parameters.topic);
+			on all MQTTServiceMessage(topic=$parameters.topic) as msg
+			{
+				inputHandler.scheduleNow(msg, new any);
+			}
 		}
 	}
-
 }
