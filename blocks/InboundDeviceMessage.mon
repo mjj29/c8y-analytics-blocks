@@ -46,7 +46,7 @@ event DeviceInputText
 	action $init() 
 	{
 		log "DeviceInputText: $init called for topic: " + $parameters.topic;
-		MQTTService.createTextSubscription($parameters.topic, "AB Block", initFinalized);
+		MQTTService.createTextSubscription($parameters.topic, "device_input_block", initFinalized);
 	}
 	action initFinalized(MQTTSubscription sub)
 	{
