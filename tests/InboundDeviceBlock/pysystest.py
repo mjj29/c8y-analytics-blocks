@@ -23,12 +23,16 @@ class PySysTest(AnalyticsBuilderBaseTest):
 		
 		self.modelId = self.createTestModel('apamax.analyticsbuilder.samples.DeviceInputText', {
 			'topic': 'topicName',
-		})
+		}, id="model1")
+		
+		self.modelId2 = self.createTestModel('apamax.analyticsbuilder.samples.DeviceInputText', {
+			'topic': 'topicName',
+		}, id="model2")
 
 		self.waitForGrep('correlator.log', expr='DeviceInputText: Subscription created for topic')
 		
 		self.sendEventStrings(self.correlator, self.timestamp(1))
-		self.correlator.sendEventStrings('com.apama.cumulocity.mqttservice.MQTTServiceMessage("topicName", {"foo": any(string, "bar")}, {"textData":any(string, "{\\"t\\": 72.0 }")})', channel="mqtt/topicName")
+		self.correlator.sendEventStrings('com.apama.cumulocity.mqttservice.MQTTServiceMessage("topicName", {"foo": any(string, "bar")}, {"textData":any(string, "{\\"t\\": 72.0 }")})', channel="receivetopicName")
 		self.sendEventStrings(self.correlator, self.timestamp(2))
 
 	def validate(self):
@@ -37,8 +41,12 @@ class PySysTest(AnalyticsBuilderBaseTest):
 		
 		# Verifying that the model is deployed successfully.
 		self.assertGrep(self.analyticsBuilderCorrelator.logfile, expr='Model \"' + self.modelId + '\" with PRODUCTION mode has started')
+		self.assertGrep(self.analyticsBuilderCorrelator.logfile, expr='Model \"' + self.modelId2 + '\" with PRODUCTION mode has started')
 
 		output = self.allOutputFromBlock(self.modelId)
 		self.assertThat("output == '{\"t\": 72.0 }'", output=output[0]['value'])
 		self.assertThat("output == {'foo': 'bar'}", output=output[0]['properties'])
+		output2 = self.allOutputFromBlock(self.modelId2)
+		self.assertThat("output == '{\"t\": 72.0 }'", output=output2[0]['value'])
+		self.assertThat("output == {'foo': 'bar'}", output=output2[0]['properties'])
 	
