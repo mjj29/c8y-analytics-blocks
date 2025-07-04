@@ -80,6 +80,7 @@ event DeviceInputText
 	}
 	action $timerTriggered(Activation $activation, any $payload)
 	{
+		log "Output triggered for DeviceInputText with payload: " + $payload;
 		MQTTServiceMessage e := <MQTTServiceMessage> $payload;
 		Value v := new Value;
 		v.value := e.data["textData"];
@@ -98,6 +99,7 @@ event DeviceInputText
 			monitor.subscribe("receive"+$parameters.topic);
 			on all MQTTServiceMessage(topic=$parameters.topic) as msg
 			{
+				log "DeviceInputText: Received MQTTServiceMessage: " + msg;
 				inputHandler.scheduleNow(msg, new any);
 			}
 		}
