@@ -2,6 +2,9 @@ package apamax.analyticsbuilder.samples;
 using apama.analyticsbuilder.BlockBase;
 using com.apama.cumulocity.TenantDetails;
 using com.softwareag.connectivity.ExtraFieldsDict;
+using com.softwareag.connectivity.Chain;
+using com.softwareag.connectivity.ConnectivityPlugins;
+using com.apama.exceptions.Exception;
 using com.apama.cumulocity.mqttservice.MQTTService;
 using com.apama.cumulocity.mqttservice.MQTTSubscription;
 using com.apama.cumulocity.mqttservice.MQTTServiceMessage;
@@ -46,7 +49,12 @@ event DeviceInputText
 	action $init() 
 	{
 		log "DeviceInputText: $init called for topic: " + $parameters.topic;
-		MQTTService.createTextSubscription($parameters.topic, "deviceinputblock", initFinalized);
+		try {
+			Chain c := ConnectivityPlugins.getChainByChannel("receive"+$parameters.topic, "TOWARDS_HOST");
+			initFinalized(MQTTSubscription.create($parameters.topic, "send"+$parameters.topic, "receive"+$parameters.topic, c, "deviceinputblock", new TenantDetails));
+		} catch (Exception e) {
+			MQTTService.createTextSubscription($parameters.topic, "deviceinputblock", initFinalized);
+		}
 	}
 	action initFinalized(MQTTSubscription sub)
 	{
