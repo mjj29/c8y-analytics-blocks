@@ -89,6 +89,7 @@ event DeviceInputText
 		send MQTTConnectionRequest($parameters.topic) to MQTTConnectionRequest.SEND_CHANNEL;
 		on MQTTConnectionResponse(topic=$parameters.topic)
 		{
+			log "DeviceInputText: Subscription created for topic: " + $parameters.topic;
 			monitor.subscribe("receive"+$parameters.topic);
 			on all MQTTServiceMessage(topic=$parameters.topic) as msg
 			{
