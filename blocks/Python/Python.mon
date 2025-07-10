@@ -29,11 +29,36 @@ event Python_$Parameters
 	}
 }
 
+/**
+ * State for the Python block.
+ */
+event Python_$State
+{
+	chunk python_state;
+}
 
 /**
  * Python
  *
  * Executes python code on the inputs and produces an output.
+ *
+ * Python code has the following local variables available:
+ * - <tt>inputs</tt> - A list of five Value objects, with members value, properties and timestamp corresponding to the block inputs.
+ * - <tt>outputs</tt> - A list of five Value objects, with members value, properties and timestamp that can be assigned to for the block outputs.
+ * - <tt>state</tt> - A dict() that can be used to store state between activations of the block.
+ * - <tt>logger</tt> - A logger object that can be used to log messages.
+ * - <tt>generate</tt> - A boolean which defaults to true, but can be set to false to prevent the block from generating output.
+ * For example:
+ * <pre>
+state["counter"] = state.get("counter", 0.) + 1.
+if inputs[0].value and inputs[1].value:
+	outputs[0].value = abs(inputs[0].value - inputs[1].value)
+	outputs[1].value = inputs[0].value - inputs[1].value
+	outputs[3].value = state["counter"]
+	outputs[2].properties = {'value1': inputs[0].properties['value1'], 'value2': inputs[1].properties['value2']}
+else:
+	generate = False
+ * </pre>
  *
  * @$blockCategory Calculations
  */
@@ -74,16 +99,18 @@ event Python
 	 * @$inputName value4 input3
 	 * @$inputName value5 input4
 	 */
-	action $process(Activation $activation, Value $input_value1, Value $input_value2, Value $input_value3, Value $input_value4, Value $input_value5) {
-		sequence<any> results := plugin.execute(compiled_expression,
-				[$input_value1.value, $input_value2.value, $input_value3.value, $input_value4.value, $input_value5.value],
-				[$input_value1.properties, $input_value2.properties, $input_value3.properties, $input_value4.properties, $input_value5.properties]);
-		if results.size()>0 and <boolean> results[0] {
+	action $process(Activation $activation, Value $input_value1, Value $input_value2, Value $input_value3, Value $input_value4, Value $input_value5, Python_$State $blockState)
+	{
+		if $blockState.python_state.empty() {
+			// If the python state is not initialized, we initialize it.
+			$blockState.python_state := plugin.createPythonState();
+		}
+		sequence<Value> results := plugin.execute(compiled_expression, $blockState.python_state, [$input_value1, $input_value2, $input_value3, $input_value4, $input_value5]);
+
+		if results.size()>0 and <boolean> results[0].value {
 			integer i := 1;
 			while i < results.size() and i <= setOutput.size() {
-				Value result := new Value;
-				result.value := results[i];
-				setOutput[i-1]($activation, result);
+				setOutput[i-1]($activation, results[i]);
 				i := i + 1;
 			}
 		}
