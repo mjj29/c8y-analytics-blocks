@@ -36,15 +36,11 @@ monitor MQTTConnectionCache
 	action onload()
 	{
 		monitor.subscribe(MQTTConnectionRequest.SEND_CHANNEL);
-		log "DeviceInputText: MQTTConnectionCache loaded.";
 		on all MQTTConnectionRequest() as r {
-			log "DeviceInputText: Received MQTTConnectionRequest for topic: " + r.topic;
 			if (subscriptions.hasKey(r.topic)) {
-				log "DeviceInputText: Found existing subscription for topic: " + r.topic;
 				send MQTTConnectionResponse(r.topic) to MQTTConnectionResponse.RECEIVE_CHANNEL;
 			} else {
 				try {
-					log "DeviceInputText: Checking for existing chain for topic: " + r.topic;
 					Chain c := ConnectivityPlugins.getChainByChannel("receive"+r.topic, "TOWARDS_HOST");
 					subscriptions[r.topic] := true;
 					send MQTTConnectionResponse(r.topic) to MQTTConnectionResponse.RECEIVE_CHANNEL;
@@ -56,13 +52,12 @@ monitor MQTTConnectionCache
 	}
 	action created(MQTTSubscription sub)
 	{
-		log "DeviceInputText: MQTT subscription created for topic: " + sub.getTopic();
 		subscriptions[sub.getTopic()] := true;
 		send MQTTConnectionResponse(sub.getTopic()) to MQTTConnectionResponse.RECEIVE_CHANNEL;
 	}
 }
 
-/** Device Input Message - text format.
+/** MQTT Service Input Message - text format.
   
   @$blockCategory Input
 */
@@ -80,7 +75,6 @@ event DeviceInputText
 	}
 	action $timerTriggered(Activation $activation, any $payload)
 	{
-		log "Output triggered for DeviceInputText with payload: " + $payload;
 		MQTTServiceMessage e := <MQTTServiceMessage> $payload;
 		Value v := new Value;
 		v.value := e.data["textData"];
@@ -95,11 +89,9 @@ event DeviceInputText
 		send MQTTConnectionRequest($parameters.topic) to MQTTConnectionRequest.SEND_CHANNEL;
 		on MQTTConnectionResponse(topic=$parameters.topic)
 		{
-			log "DeviceInputText: Subscription created for topic: " + $parameters.topic;
 			monitor.subscribe("receive"+$parameters.topic);
 			on all MQTTServiceMessage(topic=$parameters.topic) as msg
 			{
-				log "DeviceInputText: Received MQTTServiceMessage: " + msg;
 				inputHandler.scheduleNow(msg, new any);
 			}
 		}
