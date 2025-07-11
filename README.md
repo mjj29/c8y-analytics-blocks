@@ -23,6 +23,14 @@ This block will take the input value and properties and allow you to map the fie
 
 This block simulates a device producing arbitrary-format data by periodically generating the provided string into the model
 
+## Inbound Device Message block
+
+This block receives messages from MQTT service. The block outputs a single string containing the payload of the message. It may need to be decoded by a JSON decoder block and/or a Python expression block.
+
+## Create External Measurement block
+
+This block allows creation of measurements using external device IDs rather than internal Managed Object IDs, and can automatically create devices for missing external IDs.
+
 ## Adding custom blocks as extensions
 
 To use these blocks you should install the [Analytics Management](https://github.com/Cumulocity-IoT/cumulocity-analytics-management) plug-in to your Cumulocity environment, and then link it to this repository using the [https://github.com/mjj29/c8y-analytics-blocks/tree/main/blocks/](https://github.com/mjj29/c8y-analytics-blocks/tree/main/blocks/) directory.
