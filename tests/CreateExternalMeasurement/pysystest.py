@@ -16,6 +16,7 @@ class PySysTest(AnalyticsBuilderBaseTest):
 		AnalyticsBuilderBaseTest._injectCumulocitySupport(self, corr)
 		self._injectEPLOnce(corr, [self.project.APAMA_HOME+'/monitors/'+i+'.mon' for i in ['TolerateAPI', 'cumulocity/Cumulocity_Rest_API', 'Notifications2.0Events', 'Notifications2.0Subscriptions', 'MQTTServiceEvents']])  
 		self._injectEPLOnce(corr, [self.project.testRootDir+'/utils/MQTTServiceMock.mon'])
+		self._injectEPLOnce(corr, [self.project.testRootDir+'/utils/ExternalMeasurementMock.mon'])
 
 	def execute(self):
 		self.correlator = self.startAnalyticsBuilderCorrelator(blockSourceDir=f'{self.project.SOURCE}/blocks/', arguments=["--config", f"{self.project.SOURCE}/blocks/Python/plugin.yaml"])
@@ -34,6 +35,13 @@ class PySysTest(AnalyticsBuilderBaseTest):
 									'externalId':'ABC123456'
 								}),
 								self.timestamp(2),
+								self.inputEvent('measurement', 12., id=self.modelId, properties={
+									'type':'c8y_Temperature',
+									'fragment':'c8y_Temperature',
+									'series':'temp',
+									'externalId':'ABC123456'
+								}),
+								self.timestamp(3),
 								)
 
 	def validate(self):
