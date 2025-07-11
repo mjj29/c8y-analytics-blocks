@@ -76,10 +76,8 @@ event DeviceExternalIdCache
 		action<sequence<any>> returns any callback := Partial.resolve(cb);
 		string key := externalIdType + "/" + externalId;
 		if (externalIdToDeviceId.hasKey(key)) {
-			log "Already have device id for external id: " + externalIdType + "/" + externalId + ": " + externalIdToDeviceId[key] at INFO;
 			callback([<any>externalIdToDeviceId[key]]);
 		} else {
-			log "Looking up in platform for external id: " + externalIdType + "/" + externalId at INFO;
 			monitor.subscribe(GenericResponse.SUBSCRIBE_CHANNEL);
 			integer reqId := Util.generateReqId();
 			on wait(60.0) and not GenericResponseComplete(reqId=reqId) {
@@ -87,12 +85,10 @@ event DeviceExternalIdCache
 				log "Timed out waiting for response for external id: " + externalIdType + "/" + externalId at WARN;
 			}
 			on GenericResponse(reqId=reqId) as gr and not wait(60.0) {
-				log "Got a response: "+gr at INFO;
 				externalIdToDeviceId[key] := AnyExtractor.create(gr.getBody()).getString("managedObject.id");
 			}
 			on GenericResponseComplete(reqId=reqId) as grc and not wait (60.0){
 				monitor.unsubscribe(GenericResponse.SUBSCRIBE_CHANNEL);
-				log "Got a response complete for external id: " + externalIdType + "/" + externalId + " with status code: " + grc.statusCode at INFO;
 				if grc.statusCode = 404 {
 					// need to create a new device
 					if createMissingDevice {
@@ -102,7 +98,6 @@ event DeviceExternalIdCache
 						on ObjectCommitted(reqId=reqId) as oc and not ObjectCommitFailed(reqId=reqId) and not wait(60.0) {
 							monitor.unsubscribe(ManagedObject.SUBSCRIBE_CHANNEL);
 							externalIdToDeviceId[key] := oc.id;
-							log "Created new device for external id: " + externalIdType + "/" + externalId + " with id: " + oc.id at INFO;
 							send GenericRequest(Util.generateReqId(), "POST", "/identity/globalIds/"+oc.id+"/externalIds", new dictionary<string, string>, false, {"type": externalIdType, "externalId": externalId}, new dictionary<string, string>) to GenericRequest.SEND_CHANNEL;
 							callback([<any>oc.id]);
 						}
@@ -125,7 +120,6 @@ event DeviceExternalIdCache
 					}
 				} else if grc.statusCode = 200 {
 					if externalIdToDeviceId.hasKey(key) {
-						log "Found existing device for external id: " + externalIdType + "/" + externalId + " with id: " + externalIdToDeviceId[key] at INFO;
 						// device found OK and parsed in the other listener
 						callback([<any>externalIdToDeviceId[key]]);
 					} else {
@@ -136,13 +130,14 @@ event DeviceExternalIdCache
 					log "Error retrieving external id: " + externalIdType + "/" + externalId + " with status code: " + grc.statusCode at WARN;
 				}
 			}
-			log "Sending request to retrieve external id: " + externalIdType + "/" + externalId at INFO;
 			send GenericRequest(reqId, "GET", "/identity/externalIds/"+externalIdType+"/"+externalId, new dictionary<string, string>, false, new any, new dictionary<string, string>) to GenericRequest.SEND_CHANNEL;
 		}
 	}
 }
 
 /**
+ * External ID Measurement Output.
+ *
  * Create a Measurement from a device using an External ID.
  *
  * The measurement is created asynchronously.
@@ -160,13 +155,11 @@ event CreateExternalMeasurement {
 
 	action getDeviceFromExternalId(string externalId, string externalIdType, Activation activation, MeasurementFragment mf)
 	{
-		log "getDeviceFromExternalId(" + externalIdType + "/" + externalId + ")";
 		deviceCache.populateExternalId(externalIdType, externalId, Fn.partial(completedExternalId, mf), $parameters.createMissingDevice);
 	}
 	action completedExternalId(MeasurementFragment mf, string deviceId)
 	{
 		mf.source := deviceId;
-		log "completedExternalId: " + deviceId+", sending measurement fragment" + mf.toString()  at INFO;
 		send mf to MeasurementFragment.SEND_CHANNEL;
 	}
 
@@ -202,7 +195,6 @@ event CreateExternalMeasurement {
 		if $input_measurement.properties.hasKey("params") {
 			mf.params := <dictionary<string,any>> $input_measurement.properties["params"];
 		}
-		log "$process created measurement fragment: " + mf.toString();
 		getDeviceFromExternalId(<string>$input_measurement.properties["externalId"], $parameters.externalIdType, $activation, mf);
 	}
 }
