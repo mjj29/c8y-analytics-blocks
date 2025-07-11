@@ -1,0 +1,28 @@
+using com.apama.cumulocity.ObjectCommitted;
+using com.apama.cumulocity.ResponseWrapper;
+using com.apama.cumulocity.ObjectCommitFailed;
+using com.apama.cumulocity.ManagedObject;
+using com.apama.cumulocity.GenericRequest;
+using com.apama.cumulocity.GenericResponse;
+using com.apama.cumulocity.GenericResponseComplete;
+monitor MockPlatformManager
+{
+	boolean created := false;
+	action onload()
+	{
+		monitor.subscribe(GenericRequest.SEND_CHANNEL);
+		monitor.subscribe(ManagedObject.SEND_CHANNEL);
+		on all GenericRequest() as gr {
+			if created {
+				send GenericResponse(gr.reqId, {"":{"managedObject": {"id":"123456"}}}) to GenericResponse.SUBSCRIBE_CHANNEL;
+				send GenericResponseComplete(gr.reqId, false, 200, "") to GenericResponse.SUBSCRIBE_CHANNEL;
+			} else {
+				send GenericResponseComplete(gr.reqId, true, 404, "") to GenericResponse.SUBSCRIBE_CHANNEL;
+			}
+		}
+		on all ResponseWrapper() as mo {
+			send ObjectCommitted(mo.reqId, "123456", {"source":"123456"}) to ManagedObject.SUBSCRIBE_CHANNEL;
+		}
+	}
+}
+

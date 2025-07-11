@@ -1,0 +1,200 @@
+﻿/*
+ * Copyright (c) 2018-present Cumulocity GmbH, Duesseldorf, Germany and/or its affiliates and/or their licensors.
+ * Use, reproduction, transfer, publication or disclosure is prohibited except as specifically provided for in your License Agreement with Cumulocity GmbH
+ */
+package apamax.analyticsbuilder.samples;
+
+using apama.analyticsbuilder.BlockBase;
+using apama.analyticsbuilder.Activation;
+
+using com.apama.cumulocity.MeasurementFragment;
+using com.apama.cumulocity.ObjectCommitted;
+using com.apama.cumulocity.ResponseWrapper;
+using com.apama.cumulocity.ObjectCommitFailed;
+using com.apama.cumulocity.ManagedObject;
+using com.apama.cumulocity.GenericRequest;
+using com.apama.cumulocity.GenericResponse;
+using com.apama.cumulocity.GenericResponseComplete;
+using com.apama.cumulocity.Util;
+using com.apama.exceptions.Exception;
+using com.apama.functional.Fn;
+using com.apama.functional.Partial;
+using apama.analyticsbuilder.Value;
+using com.apama.util.AnyExtractor;
+
+event CreateExternalMeasurement_$Parameters {
+	/**
+	 * Measurement type.
+	 *
+	 * The type the measurement, if not provided via input
+	 */
+	optional<string> type;
+
+	/**
+	 * Fragment Name.
+	 *
+	 * The name of the fragment in the measurement, if not provided via input
+	 */
+	optional<string> fragment;
+
+	/**
+	 * Series Name.
+	 *
+	 * The name of the series in the measurement, if not provided via input
+	 */
+	optional<string> series;
+
+	/**
+	 * Unit.
+	 *
+	 * The name of the unit of measurement (for example, "mm" or "lux").
+	 */
+	optional<string> unit;
+
+
+	/**
+	 * External ID Type.
+    *
+	 * The type of the external ID (for example c8y_Serial).
+	 */
+	string externalIdType;
+
+	/**
+	 * Create missing device.
+	 * 
+	 * If set to true, a new device will be created if there is no device for the external ID.
+	 */
+	boolean createMissingDevice;
+
+}
+
+event DeviceExternalIdCache
+{
+	dictionary<string, string> externalIdToDeviceId;
+	action populateExternalId(string externalIdType, string externalId, any cb, boolean createMissingDevice)
+	{
+		action<sequence<any>> returns any callback := Partial.resolve(cb);
+		string key := externalIdType + "/" + externalId;
+		if (externalIdToDeviceId.hasKey(key)) {
+			callback([<any>externalIdToDeviceId[key]]);
+		} else {
+			monitor.subscribe(GenericResponse.SUBSCRIBE_CHANNEL);
+			integer reqId := Util.generateReqId();
+			on wait(60.0) and not GenericResponseComplete(reqId=reqId) {
+				monitor.unsubscribe(GenericResponse.SUBSCRIBE_CHANNEL);
+				log "Timed out waiting for response for external id: " + externalIdType + "/" + externalId at WARN;
+			}
+			on GenericResponse(reqId=reqId) as gr and not wait(60.0) {
+				externalIdToDeviceId[key] := AnyExtractor.create(gr.getBody()).getString("managedObject.id");
+			}
+			on GenericResponseComplete(reqId=reqId) as grc and not wait (60.0){
+				monitor.unsubscribe(GenericResponse.SUBSCRIBE_CHANNEL);
+				if grc.statusCode = 404 {
+					// need to create a new device
+					if createMissingDevice {
+						monitor.subscribe(ManagedObject.SUBSCRIBE_CHANNEL);
+						log "Creating new device for external id: " + externalIdType + "/" + externalId at INFO;
+						// create a new device
+						on ObjectCommitted(reqId=reqId) as oc and not ObjectCommitFailed(reqId=reqId) and not wait(60.0) {
+							monitor.unsubscribe(ManagedObject.SUBSCRIBE_CHANNEL);
+							externalIdToDeviceId[key] := oc.id;
+							send GenericRequest(Util.generateReqId(), "POST", "/identity/globalIds/"+oc.id+"/externalIds", new dictionary<string, string>, false, {"type": externalIdType, "externalId": externalId}, new dictionary<string, string>) to GenericRequest.SEND_CHANNEL;
+							callback([<any>oc.id]);
+						}
+						on ObjectCommitFailed(reqId=reqId) as ocf and not ObjectCommitted(reqId=reqId) and not wait(60.0) {
+							monitor.unsubscribe(ManagedObject.SUBSCRIBE_CHANNEL);
+							log "Failed to create device for external id: " + externalIdType + "/" + externalId at WARN;
+						}
+						on wait(60.0) and not ObjectCommitted(reqId=reqId) and not ObjectCommitFailed(reqId=reqId) {
+							monitor.unsubscribe(ManagedObject.SUBSCRIBE_CHANNEL);
+							log "Timed out waiting for device creation for external id: " + externalIdType + "/" + externalId at WARN;
+						}
+						ManagedObject mo := new ManagedObject;
+						mo.type := "c8y_Device";
+						mo.name := "Device for external id: " + externalIdType + "/" + externalId;
+						mo.params := {"c8y_IsDevice":<any> new dictionary<any, any>};
+
+						send mo.withChannelResponse(reqId, new dictionary<string, string>) to ManagedObject.SEND_CHANNEL;
+					} else {
+						log "No device found for external id: " + externalIdType + "/" + externalId at WARN;
+					}
+				} else if grc.statusCode = 200 {
+					if externalIdToDeviceId.hasKey(key) {
+						// device found OK and parsed in the other listener
+						callback([<any>externalIdToDeviceId[key]]);
+					} else {
+						log "Error retrieving external id: " + externalIdType + "/" + externalId + " with status code: " + grc.statusCode at WARN;
+					}
+				} else {
+					// some other error
+					log "Error retrieving external id: " + externalIdType + "/" + externalId + " with status code: " + grc.statusCode at WARN;
+				}
+			}
+			send GenericRequest(reqId, "GET", "/identity/externalIds/"+externalIdType+"/"+externalId, new dictionary<string, string>, false, new any, new dictionary<string, string>) to GenericRequest.SEND_CHANNEL;
+		}
+	}
+}
+
+/**
+ * External ID Measurement Output.
+ *
+ * Create a Measurement from a device using an External ID.
+ *
+ * The measurement is created asynchronously.
+ *
+ * You can optionally choose to create a new device if there is not one for the corresponding external ID.
+ * 
+ * @$blockCategory Output
+ * @$producesOutput
+ * @$blockType c8y_Output
+ */
+event CreateExternalMeasurement {
+	BlockBase $base;
+	CreateExternalMeasurement_$Parameters $parameters;
+	DeviceExternalIdCache deviceCache;
+
+	action getDeviceFromExternalId(string externalId, string externalIdType, Activation activation, MeasurementFragment mf)
+	{
+		deviceCache.populateExternalId(externalIdType, externalId, Fn.partial(completedExternalId, mf), $parameters.createMissingDevice);
+	}
+	action completedExternalId(MeasurementFragment mf, string deviceId)
+	{
+		mf.source := deviceId;
+		send mf to MeasurementFragment.SEND_CHANNEL;
+	}
+
+
+	/**
+	 * Process an activation.
+	 * @param $input_measurement The measurement to be sent. The properties should contain the externalId and optionally measurementType, fragment and series and timestamp.
+	 * @$inputName measurement Measurement
+	 */
+	action $process(Activation $activation, Value $input_measurement)
+	{
+		MeasurementFragment mf := new MeasurementFragment;
+		ifpresent $parameters.type as type {
+			mf.type := type;
+		} else {
+			mf.type := <string>$input_measurement.properties["type"];
+		}
+		mf.time := <float>$input_measurement.properties.getOr("time", currentTime);
+		ifpresent $parameters.fragment as fragment {
+			mf.valueFragment := fragment;
+		} else {
+			mf.valueFragment := <string>$input_measurement.properties["fragment"];
+		}
+		ifpresent $parameters.series as series {
+			mf.valueSeries := series;
+		} else {
+			mf.valueSeries := <string>$input_measurement.properties["series"];
+		}
+		mf.value := <float>$input_measurement.value;
+		ifpresent $parameters.unit as unit {
+			mf.unit := unit;
+		}
+		if $input_measurement.properties.hasKey("params") {
+			mf.params := <dictionary<string,any>> $input_measurement.properties["params"];
+		}
+		getDeviceFromExternalId(<string>$input_measurement.properties["externalId"], $parameters.externalIdType, $activation, mf);
+	}
+}
