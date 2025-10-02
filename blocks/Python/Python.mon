@@ -58,7 +58,7 @@ event Python_$State
  * - setState(key, value) - A function that can be used to set state between activations of the block.
  * The return value of the function is a list of up to five values corresponding to the block outputs. These can either be bare values, or Value objects, with members value, properties and timestamp. If the function does not generate a value, return None instead.
  * For example:
- * <pre style="white-space: pre;">
+ * <pre>
 import math
 def onInput(inputs, context):
 	context.setState("counter", context.getState("counter", 0.) + 1.)
