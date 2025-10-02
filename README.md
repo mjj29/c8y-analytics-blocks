@@ -9,7 +9,7 @@ This block allows function written in a restricted subset of python to be define
 
 For example:
 
-```lang=python
+```python
 	import math
 	def onInput(inputs, context):
 		context.setState("counter", context.getState("counter", 0.) + 1.)
