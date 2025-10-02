@@ -16,15 +16,22 @@ event Python_$Parameters
 {
 	import "PythonBlockPlugin" as plugin;
 	/**
-	 * Python expression
+	  * An arbitrary label for the block instance.
+	  */
+	optional<string> label;
+	/**
+	 * Python function.
+	 *
+	 * The python code must define a function onInput that takes inputs and context as arguments and returns a list of outputs.
+	 *
 	 * @$semanticType pab_codeEditor_python
 	 */
-	string expression;
+	string pythonFunction;
 	/** 
 	 * This action is called by the framework to validate the parameters of the block. 
 	 */
 	action $validate() {
-		plugin.validate(expression);
+		plugin.validate(pythonFunction);
 	}
 }
 
@@ -41,25 +48,32 @@ event Python_$State
  *
  * Executes python code on the inputs and produces an output.
  *
- * Python code has the following local variables available:
- * - <tt>inputs</tt> - A list of five Value objects, with members value, properties and timestamp corresponding to the block inputs.
- * - <tt>outputs</tt> - A list of five Value objects, with members value, properties and timestamp that can be assigned to for the block outputs.
- * - <tt>state</tt> - A dict() that can be used to store state between activations of the block.
- * - <tt>logger</tt> - A logger object that can be used to log messages.
- * - <tt>generate</tt> - A boolean which defaults to true, but can be set to false to prevent the block from generating output.
+ * Python code must define a function onInput that takes inputs and context as an argument and returns a list of outputs.
+ * The inputs are a list of five Value objects, with members value, properties and timestamp corresponding to the block inputs.
+ * The context contains the following members/functions:
+ * - logger - A logger object that can be used to log messages.
+ * - getState(key, default) - A function that can be used to get state between activations of the block.
+ * - setState(key, value) - A function that can be used to set state between activations of the block.
+ * The return value of the function is a list of up to five values corresponding to the block outputs. These can either be bare values, or Value objects, with members value, properties and timestamp. If the function does not generate a value, return None instead.
  * For example:
  * <pre>
-state["counter"] = state.get("counter", 0.) + 1.
-if inputs[0].value and inputs[1].value:
-	outputs[0].value = abs(inputs[0].value - inputs[1].value)
-	outputs[1].value = inputs[0].value - inputs[1].value
-	outputs[3].value = state["counter"]
-	outputs[2].properties = {'value1': inputs[0].properties['value1'], 'value2': inputs[1].properties['value2']}
-else:
-	generate = False
+import math
+def onInput(inputs, context):
+	context.setState("counter", context.getState("counter", 0.) + 1.)
+	(a, b) = (inputs[0].value, inputs[1].value)
+	if a and b:
+		return [
+			math.fabs(a - b),
+			a - b,
+			context.getState("counter"),
+			Value(True, {'value1': inputs[0].properties['value1'], 'value2': inputs[1].properties['value2']}),
+		]
+	else:
+		return None
  * </pre>
  *
  * @$blockCategory Calculations
+ * @$derivedName $label
  */
 event Python 
 {
@@ -78,7 +92,7 @@ event Python
 	action $init()
 	{
 		setOutput := [$setOutput_result1, $setOutput_result2, $setOutput_result3, $setOutput_result4, $setOutput_result5];
-		compiled_expression := plugin.validate($parameters.expression);
+		compiled_function := plugin.validate($parameters.pythonFunction);
 	}
 
 	/**
@@ -92,11 +106,11 @@ event Python
 	 * @param $input_value4 Fourth input to the block.
 	 * @param $input_value5 Fifth input to the block.
 	 *
-	 * @$inputName value1 input0
-	 * @$inputName value2 input1
-	 * @$inputName value3 input2
-	 * @$inputName value4 input3
-	 * @$inputName value5 input4
+	 * @$inputName value1 inputs[0]
+	 * @$inputName value2 inputs[1]
+	 * @$inputName value3 inputs[2]
+	 * @$inputName value4 inputs[3]
+	 * @$inputName value5 inputs[4]
 	 */
 	action $process(Activation $activation, Value $input_value1, Value $input_value2, Value $input_value3, Value $input_value4, Value $input_value5, Python_$State $blockState)
 	{
@@ -104,42 +118,42 @@ event Python
 			// If the python state is not initialized, we initialize it.
 			$blockState.python_state := plugin.createPythonState();
 		}
-		sequence<Value> results := plugin.execute(compiled_expression, $blockState.python_state, [$input_value1, $input_value2, $input_value3, $input_value4, $input_value5]);
+		sequence<Value> results := plugin.execute(compiled_function, $blockState.python_state, [$input_value1, $input_value2, $input_value3, $input_value4, $input_value5]);
 
-		if results.size()>0 and <boolean> results[0].value {
-			integer i := 1;
-			while i < results.size() and i <= setOutput.size() {
-				setOutput[i-1]($activation, results[i]);
+		if results.size()>0 {
+			integer i := 0;
+			while i < results.size() and i < setOutput.size() {
+				setOutput[i]($activation, results[i]);
 				i := i + 1;
 			}
 		}
 	}
 	
 	/**
-	 * output0
+	 * outputs[0]
 	 */
 	action<Activation,Value> $setOutput_result1;		// This is initialized by the framework. It sets the output of the block and may trigger any blocks connected to this output.
 	
 	/**
-	 * output1
+	 * outputs[1]
 	 */
 	action<Activation,Value> $setOutput_result2;	// This is initialized by the framework. It sets the output of the block and may trigger any blocks connected to this output.
 	
 	/**
-	 * output2
+	 * outputs[2]
 	 */
 	action<Activation,Value> $setOutput_result3;	// This is initialized by the framework. It sets the output of the block and may trigger any blocks connected to this output.
 	
 	/**
-	 * output3
+	 * outputs[3]
 	 */
 	action<Activation,Value> $setOutput_result4;	// This is initialized by the framework. It sets the output of the block and may trigger any blocks connected to this output.
 	
 	/**
-	 * output4
+	 * outputs[4]
 	 */
 	action<Activation,Value> $setOutput_result5;	// This is initialized by the framework. It sets the output of the block and may trigger any blocks connected to this output.
 
 	sequence<action<Activation,Value>> setOutput;
-	chunk compiled_expression;
+	chunk compiled_function;
 }

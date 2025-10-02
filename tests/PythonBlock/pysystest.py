@@ -19,15 +19,22 @@ class PySysTest(AnalyticsBuilderBaseTest):
 		self.correlator = self.startAnalyticsBuilderCorrelator(blockSourceDir=f'{self.project.SOURCE}/blocks/', arguments=["--config", f"{self.project.SOURCE}/blocks/Python/plugin.yaml"])
 		
 		self.modelId = self.createTestModel('apamax.analyticsbuilder.samples.Python', {
-			'expression':"""
-state["counter"] = state.get("counter", 0.) + 1.
-if inputs[0].value and inputs[1].value:
-	outputs[0].value = abs(inputs[0].value - inputs[1].value)
-	outputs[1].value = inputs[0].value - inputs[1].value
-	outputs[2].value = str({'value1': inputs[0].properties['value1'], 'value2': inputs[1].properties['value2']})
-	outputs[3].value = state["counter"]
-else:
-	generate = False
+			'label': 'Python Test Model',
+			'pythonFunction':"""import math, operator, json
+def onInput(inputs, context):
+	context.logger.info("Processing inputs: " + str([i.value for i in inputs]))
+	(a, b) = (inputs[0].value, inputs[1].value)
+	context.setState("counter", context.getState("counter", 0.) + 1.)
+	if a and b:
+		return [
+			math.fabs(a-b),
+			operator.sub(a, b),
+			Value(True, {'value1': inputs[0].properties['value1'], 'value2': inputs[1].properties['value2']}),
+			Value(context.getState("counter")),
+			json.dumps(inputs[0].properties)
+		]
+	else:
+		return None
 """
 		})
 		
@@ -49,8 +56,13 @@ else:
 		# Verifying that the model is deployed successfully.
 		self.assertGrep(self.analyticsBuilderCorrelator.logfile, expr='Model \"' + self.modelId + '\" with PRODUCTION mode has started')
 		
+		self.assertGrep(self.analyticsBuilderCorrelator.logfile, expr='Processing inputs')
+		
 		# Verifying the result - output from the block.
 		self.assertBlockOutput('result1', [4.5, 5])
 		self.assertBlockOutput('result2', [4.5, -5])
-		self.assertBlockOutput('result3', ["{'value1': 'value', 'value2': 'value'}", "{'value1': 'value', 'value2': 'value'}"])
 		self.assertBlockOutput('result4', [2, 3])
+
+		self.assertThat("output == expected",
+						expected=[{'value1': 'value', 'value2': 'value'}, {'value1': 'value', 'value2': 'value'}],
+						output=[x['properties'] for x in self.allOutputFromBlock(self.modelId) if x['outputId']=='result3'])
