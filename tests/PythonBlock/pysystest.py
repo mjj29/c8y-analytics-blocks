@@ -24,12 +24,8 @@ class PySysTest(AnalyticsBuilderBaseTest):
 def onInput(inputs, context):
 	context.logger.info("Processing inputs: " + str([i.value for i in inputs]))
 	(a, b) = (inputs[0].value, inputs[1].value)
-	context.logger.info("a: " + str(a) + ", b: " + str(b))
 	context.setState("counter", context.getState("counter", 0.) + 1.)
-	context.logger.info("counter incremented")
 	if a and b:
-		context.logger.info("Both inputs are valid numbers")
-		context.logger.info("json="+str(json)+"json.dumps="+str(json.dumps))
 		return [
 			math.fabs(a-b),
 			operator.sub(a, b),
@@ -38,7 +34,6 @@ def onInput(inputs, context):
 			json.dumps(inputs[0].properties)
 		]
 	else:
-		context.logger.info("One or both inputs are not valid numbers")
 		return None
 """
 		})
@@ -60,6 +55,8 @@ def onInput(inputs, context):
 		
 		# Verifying that the model is deployed successfully.
 		self.assertGrep(self.analyticsBuilderCorrelator.logfile, expr='Model \"' + self.modelId + '\" with PRODUCTION mode has started')
+		
+		self.assertGrep(self.analyticsBuilderCorrelator.logfile, expr='Processing inputs')
 		
 		# Verifying the result - output from the block.
 		self.assertBlockOutput('result1', [4.5, 5])

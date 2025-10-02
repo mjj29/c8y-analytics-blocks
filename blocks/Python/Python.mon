@@ -57,12 +57,13 @@ event Python_$State
  * The return value of the function is a list of up to five values corresponding to the block outputs. These can either be bare values, or Value objects, with members value, properties and timestamp. If the function does not generate a value, return None instead.
  * For example:
  * <pre>
+import math
 def onInput(inputs, context):
 	context.setState("counter", context.getState("counter", 0.) + 1.)
 	(a, b) = (inputs[0].value, inputs[1].value)
 	if a and b:
 		return [
-			abs(a - b),
+			math.fabs(a - b),
 			a - b,
 			context.getState("counter"),
 			Value(True, {'value1': inputs[0].properties['value1'], 'value2': inputs[1].properties['value2']}),

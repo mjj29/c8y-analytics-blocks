@@ -3,9 +3,27 @@ Custom community supported blocks for Cumulocity Analytics Builder
 
 This repo contains the following blocks
 
-## Python expression block
+## Python function block
 
-This block allows expressions written in a restricted subset of python to be defined in an analytics builder model.
+This block allows function written in a restricted subset of python to be defined in an analytics builder model.
+
+For example:
+
+```lang=python
+	import math
+	def onInput(inputs, context):
+		context.setState("counter", context.getState("counter", 0.) + 1.)
+		(a, b) = (inputs[0].value, inputs[1].value)
+		if a and b:
+			return [
+				math.fabs(a - b),
+				a - b,
+				context.getState("counter"),
+				Value(True, {'value1': inputs[0].properties['value1'], 'value2': inputs[1].properties['value2']}),
+			]
+		else:
+			return None
+```
 
 ## JSON encoder/decoder blocks
 
