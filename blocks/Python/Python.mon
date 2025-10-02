@@ -16,6 +16,8 @@ event Python_$Parameters
 {
 	import "PythonBlockPlugin" as plugin;
 	/**
+	  * Label.
+	  *
 	  * An arbitrary label for the block instance.
 	  */
 	optional<string> label;
@@ -56,7 +58,7 @@ event Python_$State
  * - setState(key, value) - A function that can be used to set state between activations of the block.
  * The return value of the function is a list of up to five values corresponding to the block outputs. These can either be bare values, or Value objects, with members value, properties and timestamp. If the function does not generate a value, return None instead.
  * For example:
- * <pre>
+ * <pre style="white-space: pre;">
 import math
 def onInput(inputs, context):
 	context.setState("counter", context.getState("counter", 0.) + 1.)
@@ -131,26 +133,36 @@ event Python
 	
 	/**
 	 * outputs[0]
+	 *
+	 * This is the first output of the block.
 	 */
 	action<Activation,Value> $setOutput_result1;		// This is initialized by the framework. It sets the output of the block and may trigger any blocks connected to this output.
 	
 	/**
 	 * outputs[1]
+	 *
+	 * This is the second output of the block.
 	 */
 	action<Activation,Value> $setOutput_result2;	// This is initialized by the framework. It sets the output of the block and may trigger any blocks connected to this output.
 	
 	/**
 	 * outputs[2]
+	 *
+	 * This is the third output of the block.
 	 */
 	action<Activation,Value> $setOutput_result3;	// This is initialized by the framework. It sets the output of the block and may trigger any blocks connected to this output.
 	
 	/**
 	 * outputs[3]
+	 *
+	 * This is the fourth output of the block.
 	 */
 	action<Activation,Value> $setOutput_result4;	// This is initialized by the framework. It sets the output of the block and may trigger any blocks connected to this output.
 	
 	/**
 	 * outputs[4]
+	 *
+	 * This is the fifth output of the block.
 	 */
 	action<Activation,Value> $setOutput_result5;	// This is initialized by the framework. It sets the output of the block and may trigger any blocks connected to this output.
 
