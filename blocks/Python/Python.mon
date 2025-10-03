@@ -64,21 +64,21 @@ event Python_$State
  The return value of the function is a list of up to five values corresponding to the block outputs. These can either be bare values, or Value objects, with members value, properties and timestamp. If the function does not generate a value, return None instead.
  
  For example:
- <code>
-import math
-def onInput(inputs, context):
-   context.setState("counter", context.getState("counter", 0.) + 1.)
-   (a, b) = (inputs[0].value, inputs[1].value)
-   if a and b:
-      return [
-         math.fabs(a - b),
-         a - b,
-         context.getState("counter"),
-         Value(True, {'value1': inputs[0].properties['value1'], 'value2': inputs[1].properties['value2']}),
-      ]
-   else:
-      return None
- </code>
+<pre>
+import math<br/>
+def onInput(inputs, context):<br/>
+&nbsp;&nbsp;context.setState("counter", context.getState("counter", 0.) + 1.)<br/>
+&nbsp;&nbsp;(a, b) = (inputs[0].value, inputs[1].value)<br/>
+&nbsp;&nbsp;if a and b:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;return [<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;math.fabs(a - b),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;a - b,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;context.getState("counter"),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Value(True, {'value1': inputs[0].properties['value1'], 'value2': inputs[1].properties['value2']}),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;]<br/>
+&nbsp;&nbsp;else:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;return None<br/>
+</pre>
  *
  * @$blockCategory Calculations
  * @$derivedName $label
