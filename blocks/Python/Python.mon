@@ -51,28 +51,34 @@ event Python_$State
  * Executes python code on the inputs and produces an output.
  *
  * Python code must define a function onInput that takes inputs and context as an argument and returns a list of outputs.
+ *
  * The inputs are a list of five Value objects, with members value, properties and timestamp corresponding to the block inputs.
+ *
  * The context contains the following members/functions:
- * - logger - A logger object that can be used to log messages.
- * - getState(key, default) - A function that can be used to get state between activations of the block.
- * - setState(key, value) - A function that can be used to set state between activations of the block.
- * The return value of the function is a list of up to five values corresponding to the block outputs. These can either be bare values, or Value objects, with members value, properties and timestamp. If the function does not generate a value, return None instead.
- * For example:
- * <pre>
+ <ul>
+ <li>logger - A logger object that can be used to log messages.</li>
+ <li>getState(key, default) - A function that can be used to get state between activations of the block.</li>
+ <li>setState(key, value) - A function that can be used to set state between activations of the block.</li>
+ </ul>
+
+ The return value of the function is a list of up to five values corresponding to the block outputs. These can either be bare values, or Value objects, with members value, properties and timestamp. If the function does not generate a value, return None instead.
+ 
+ For example:
+ <code>
 import math
 def onInput(inputs, context):
-	context.setState("counter", context.getState("counter", 0.) + 1.)
-	(a, b) = (inputs[0].value, inputs[1].value)
-	if a and b:
-		return [
-			math.fabs(a - b),
-			a - b,
-			context.getState("counter"),
-			Value(True, {'value1': inputs[0].properties['value1'], 'value2': inputs[1].properties['value2']}),
-		]
-	else:
-		return None
- * </pre>
+   context.setState("counter", context.getState("counter", 0.) + 1.)
+   (a, b) = (inputs[0].value, inputs[1].value)
+   if a and b:
+      return [
+         math.fabs(a - b),
+         a - b,
+         context.getState("counter"),
+         Value(True, {'value1': inputs[0].properties['value1'], 'value2': inputs[1].properties['value2']}),
+      ]
+   else:
+      return None
+ </code>
  *
  * @$blockCategory Calculations
  * @$derivedName $label
