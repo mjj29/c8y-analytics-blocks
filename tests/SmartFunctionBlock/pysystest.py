@@ -20,12 +20,13 @@ class PySysTest(AnalyticsBuilderBaseTest):
 		
 		self.modelId = self.createTestModel('apamax.analyticsbuilder.samples.SmartFunction', {
 			'label': 'JS Test Model',
-			'smartFunction':"""export function onInput(inputs) {
+			'smartFunction':"""export function onInput(inputs, ctx) {
 	console.log("Processing inputs");
+	ctx.setState("count", ctx.getState("count", 0) + 1);
 	if (inputs[0].value == null || inputs[1].value == null) {
 		return null;
 	} else {
-		return [inputs[0].value - inputs[1].value];
+		return [inputs[0].value - inputs[1].value, {value: inputs[0].value - inputs[1].value}, {value: 42, properties: { ...inputs[0].properties, ...inputs[1].properties}}, ctx.getState("count")];
 	}
 }
 """
@@ -53,3 +54,9 @@ class PySysTest(AnalyticsBuilderBaseTest):
 		
 		# Verifying the result - output from the block.
 		self.assertBlockOutput('result1', [4.5, -5.])
+		self.assertBlockOutput('result2', [4.5, -5.])
+		self.assertBlockOutput('result3', [42, 42])
+		self.assertBlockOutput('result4', [2, 3])
+		self.assertThat("output == expected",
+						expected=[{'value1': 'value', 'value2': 'value'}, {'value1': 'value', 'value2': 'value'}],
+						output=[x['properties'] for x in self.allOutputFromBlock(self.modelId) if x['outputId']=='result3'])

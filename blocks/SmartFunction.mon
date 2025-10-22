@@ -8,6 +8,7 @@ package apamax.analyticsbuilder.samples;
 using apama.analyticsbuilder.BlockBase;
 using apama.analyticsbuilder.Activation;
 using apama.analyticsbuilder.Value;
+using com.apama.functional.Fn;
 
 /**
  * Parameters for Python block.
@@ -51,19 +52,35 @@ event SmartFunction_$State
  *
  * Executes a JS Smart Function on the inputs and produces an output.
  *
- * The Smart Function must export a function onInput that takes inputs and context as an argument and returns a list of outputs.
+ * The Smart Function must export a function onInput that takes inputs and context as arguments and returns a list of outputs.
  *
  * The inputs are a list of five Value objects, with members value, properties and timestamp corresponding to the block inputs.
  *
- * The context contains the following members/functions:
- <ul>
- <li>logger - A logger object that can be used to log messages.</li>
- <li>getState(key, default) - A function that can be used to get state between activations of the block.</li>
- <li>setState(key, value) - A function that can be used to set state between activations of the block.</li>
- </ul>
-
- The return value of the function is a list of up to five values corresponding to the block outputs. These can either be bare values, or Value objects, with members value, properties and timestamp. If the function does not generate a value, return None instead.
- 
+ * Context has the following methods:
+ * <ul>
+ *  <li>getState(key, def = null): retrieves a value previously stored in the context under the given key. If no value is found, returns def.</li>
+ *  <li>setState(key, value): stores the given value in the context under the given key.</li>
+ * </ul>
+ *
+ * In addition, the console object has log, warn, error and debug members that can be used to log messages to the Analytics Builder log.
+ *
+ * The return value of the function is a list of up to five values corresponding to the block outputs. These can either be bare values, or Value objects, with members value, properties and timestamp. If the function does not generate a value, return null instead.
+ *
+ * For example:
+<pre>
+export function onInput(inputs, context) {<br/>
+&nbsp;&nbsp;console.log("Processing inputs");<br/>
+&nbsp;&nbsp;context.setState("count", context.getState("count", 0) + 1);<br/>
+&nbsp;&nbsp;if (inputs[0].value != null && inputs[1].value != null) {<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;return [<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;inputs[0].value - inputs[1].value,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{value: inputs[0].value - inputs[1].value,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; properties: { ...inputs[0].properties, ...inputs[1].properties }}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;];<br/>
+&nbsp;&nbsp;}<br/>
+&nbsp;&nbsp;return null;<br/>
+}<br/>
+</pre>
  *
  * @$blockCategory Calculations
  * @$derivedName $label
@@ -107,7 +124,22 @@ event SmartFunction
 	 */
 	action $process(Activation $activation, Value $input_value1, Value $input_value2, Value $input_value3, Value $input_value4, Value $input_value5, SmartFunction_$State $blockState)
 	{
-		any r := plugin.executeJS(compiled_function, "onInput", [<any>[$input_value1, $input_value2, $input_value3, $input_value4, $input_value5]]);
+		if $blockState.js_state.empty() {
+			chunk initCode := plugin.compileJS("export function makeState() {\n"+
+					"  const store = Object.create(null);\n"+
+					"  return {\n"+
+					"    getState(key, def = null) {\n"+
+					"      return key in store ? store[key] : def;\n"+
+					"    },\n"+
+					"    setState(key, value) {\n"+
+					"      store[key] = value;\n"+
+					"    },\n"+
+					"  };\n"+
+					"}\n", 100000, 1000);
+			$blockState.js_state := plugin.createJSObject(initCode, "makeState", new sequence<any>);
+			plugin.destroyJS(initCode);
+		}
+		any r := plugin.executeJS(compiled_function, "onInput", [[$input_value1, $input_value2, $input_value3, $input_value4, $input_value5], $blockState.js_state]);
 
 		if not r.empty() {
 			sequence<any> results := <sequence<any>> r;
@@ -119,13 +151,25 @@ event SmartFunction
 					if not rv.empty() {
 						switch (rv) {
 							case float: { v.value := rv; }
-							case integer: { v.value := rv; }
+							case integer: { v.value := rv.toFloat(); }
 							case string: { v.value := rv; }
 							case boolean: { v.value := rv; }
 							default: {
-								v.value := (<dictionary<any, any>>results[i]).getOr("value", true);
-								v.properties := <dictionary<string,any>> (<dictionary<any, any>>results[i]).getOr("properties", new dictionary<string, any>);
-								v.timestamp := <float> (<dictionary<any, any>>results[i]).getOr("timestamp", 0.0);
+								if results[i].hasEntry("value") {
+									switch (results[i].getEntry("value") as rval) {
+										case float: { v.value := rval; }
+										case integer: { v.value := rval.toFloat(); }
+										case string: { v.value := rval; }
+										case boolean: { v.value := rval;	}
+									}
+								}
+								if results[i].hasEntry("properties") {
+									log results[i].getEntry("properties").valueToString();
+									v.properties := <dictionary<string,any>> Fn.mapKeys(results[i].getEntry("properties"), Fn.toType("string"));
+								}
+								if results[i].hasEntry("timestamp") {
+									v.timestamp := <float> results[i].getEntry("timestamp");
+								}
 							}
 						}
 						setOutput[i]($activation, v);
