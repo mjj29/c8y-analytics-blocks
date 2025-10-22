@@ -42,6 +42,10 @@ class PySysTest(AnalyticsBuilderBaseTest):
 								self.timestamp(2.5),
 							  )
 
+		self.correlator.flush()
+		self.correlator.delete(all=True)
+		self.correlator.shutdown()
+
 
 	def validate(self):
 		# Verifying that there are no errors in log file.
