@@ -48,6 +48,8 @@ export function onInput(inputs, context) {
 }
 ```
 
+The TypeScript API for Smart Functions can be seen in [SmartFunction.ts](docs/SmartFunction.ts)
+
 ## JSON encoder/decoder blocks
 
 These blocks convert between a string value in encoded JSON form, to a decoded value sent in the output properties

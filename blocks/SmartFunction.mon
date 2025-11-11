@@ -23,6 +23,24 @@ event SmartFunction_$Parameters
 	  */
 	optional<string> label;
 	/**
+	  * param1.
+	  *
+	  * An arbitrary parameter that can be templated into the Smart Function code.
+	  */
+	optional<string> param1;
+	/**
+	  * param2.
+	  *
+	  * An arbitrary parameter that can be templated into the Smart Function code.
+	  */
+	optional<string> param2;
+	/**
+	  * param3.
+	  *
+	  * An arbitrary parameter that can be templated into the Smart Function code.
+	  */
+	optional<string> param3;
+	/**
 	 * Smart Function.
 	 *
 	 * The JS code must define a function onInput that takes inputs and context as arguments and returns a list of outputs.
@@ -61,6 +79,8 @@ event SmartFunction_$State
  *  <li>setState(key, value): stores the given value in the context under the given key.</li>
  * </ul>
  *
+ * The context object also has a member blockParameters that contains the block parameters as specified in the block configuration.
+ *
  * In addition, the console object has log, warn, error and debug members that can be used to log messages to the Analytics Builder log.
  *
  * The return value of the function is a list of up to five values corresponding to the block outputs. These can either be bare values, or Value objects, with members value, properties and timestamp. If the function does not generate a value, return null instead.
@@ -97,7 +117,7 @@ event SmartFunction
 	/** Block parameters, filled in by the framework. */
 	SmartFunction_$Parameters $parameters;
 
-	/** Setup the return vector */
+	/** Setup the return vector. */
 	action $init()
 	{
 		setOutput := [$setOutput_result1, $setOutput_result2, $setOutput_result3, $setOutput_result4, $setOutput_result5];
@@ -124,18 +144,20 @@ event SmartFunction
 	action $process(Activation $activation, Value $input_value1, Value $input_value2, Value $input_value3, Value $input_value4, Value $input_value5, SmartFunction_$State $blockState)
 	{
 		if $blockState.js_state.empty() {
-			chunk initCode := plugin.compileJS("export function makeState() {\n"+
+			chunk initCode := plugin.compileJS("export function makeState(params) {\n"+
 					"  const store = Object.create(null);\n"+
 					"  return {\n"+
+					"    runtime: 'streaming-analytics',\n"+
 					"    getState(key, def = null) {\n"+
 					"      return key in store ? store[key] : def;\n"+
 					"    },\n"+
 					"    setState(key, value) {\n"+
 					"      store[key] = value;\n"+
 					"    },\n"+
+					"    blockParameters: params\n"+
 					"  };\n"+
 					"}\n", 100000, 1000);
-			$blockState.js_state := plugin.createJSObject(initCode, "makeState", new sequence<any>);
+			$blockState.js_state := plugin.createJSObject(initCode, "makeState", [<any>$parameters]);
 			plugin.destroyJS(initCode);
 		}
 		any r := plugin.executeJS(compiled_function, "onInput", [[$input_value1, $input_value2, $input_value3, $input_value4, $input_value5], $blockState.js_state]);

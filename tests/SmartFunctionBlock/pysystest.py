@@ -20,13 +20,14 @@ class PySysTest(AnalyticsBuilderBaseTest):
 		
 		self.modelId = self.createTestModel('apamax.analyticsbuilder.samples.SmartFunction', {
 			'label': 'JS Test Model',
+			'param1': '42',
 			'smartFunction':"""export function onInput(inputs, ctx) {
 	console.log("Processing inputs");
 	ctx.setState("count", ctx.getState("count", 0) + 1);
 	if (inputs[0].value == null || inputs[1].value == null) {
 		return null;
 	} else {
-		return [inputs[0].value - inputs[1].value, {value: inputs[0].value - inputs[1].value}, {value: 42, properties: { ...inputs[0].properties, ...inputs[1].properties}}, ctx.getState("count")];
+		return [inputs[0].value - inputs[1].value, {value: inputs[0].value - inputs[1].value}, {value: Number(ctx.blockParameters.param1), properties: { 'param1':ctx.blockParameters.param1, 'param2':ctx.blockParameters.param2, ...inputs[0].properties, ...inputs[1].properties}}, ctx.getState("count")];
 	}
 }
 """
@@ -62,5 +63,5 @@ class PySysTest(AnalyticsBuilderBaseTest):
 		self.assertBlockOutput('result3', [42, 42])
 		self.assertBlockOutput('result4', [2, 3])
 		self.assertThat("output == expected",
-						expected=[{'value1': 'value', 'value2': 'value'}, {'value1': 'value', 'value2': 'value'}],
+						expected=[{'param1': '42', 'param2': None, 'value1': 'value', 'value2': 'value'}, {'param1': '42', 'param2': None, 'value1': 'value', 'value2': 'value'}],
 						output=[x['properties'] for x in self.allOutputFromBlock(self.modelId) if x['outputId']=='result3'])
