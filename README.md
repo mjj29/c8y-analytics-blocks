@@ -25,6 +25,29 @@ For example:
 			return None
 ```
 
+## Smart Function block
+
+This block allows JS Smart Functions to be defined in an analytics builder model. It requires a Streaming Analytics microservice of at least version 26.252.0.
+
+For example:
+
+```javascript
+export function onInput(inputs, context) {
+	console.log("Processing inputs");
+	context.setState("counter", context.getState("counter", 0) + 1);
+	const [a, b] = [inputs[0].value, inputs[1].value];
+	if (a != null && b != null) {
+		return [
+			Math.abs(a - b),
+			a - b,
+			context.getState("counter"),
+			{value: a - b, properties: { ...inputs[0].properties, ...inputs[1].properties }}
+		];
+	}
+	return null;
+}
+```
+
 ## JSON encoder/decoder blocks
 
 These blocks convert between a string value in encoded JSON form, to a decoded value sent in the output properties
