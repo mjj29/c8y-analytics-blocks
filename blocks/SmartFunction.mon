@@ -11,7 +11,7 @@ using apama.analyticsbuilder.Value;
 using com.apama.functional.Fn;
 
 /**
- * Parameters for Python block.
+ * Parameters for Smart Function block.
  */
 event SmartFunction_$Parameters
 {
@@ -23,9 +23,9 @@ event SmartFunction_$Parameters
 	  */
 	optional<string> label;
 	/**
-	 * Python function.
+	 * Smart Function.
 	 *
-	 * The python code must define a function onInput that takes inputs and context as arguments and returns a list of outputs.
+	 * The JS code must define a function onInput that takes inputs and context as arguments and returns a list of outputs.
 	 *
 	 * @$semanticType pab_codeEditor_javascript
 	 */
@@ -39,7 +39,7 @@ event SmartFunction_$Parameters
 }
 
 /**
- * State for the Python block.
+ * State for the SmartFunction block.
  */
 event SmartFunction_$State
 {
