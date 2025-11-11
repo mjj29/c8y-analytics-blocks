@@ -27,5 +27,5 @@ export type BlockValueOrPrimitive = BlockValue | string | number | boolean;
 
 declare global {
 	/** Smart functions running in Streaming Analytics must implement this function. */
-	export function onInput(inputs: BlockValue[], context: StreamingAnalyticsContext): BlockValueOrPrimitive[];
+	export function onInput(inputs: BlockValue[], context: StreamingAnalyticsContext): BlockValueOrPrimitive[] | Promise<BlockValueOrPrimitive[]>;
 }
