@@ -1,0 +1,63 @@
+package apamax.analyticsbuilder.samples;
+using apama.analyticsbuilder.BlockBase;
+using com.apama.cumulocity.TenantDetails;
+using com.softwareag.connectivity.ExtraFieldsDict;
+using com.softwareag.connectivity.Chain;
+using com.softwareag.connectivity.ConnectivityPlugins;
+using com.apama.exceptions.Exception;
+using com.apama.cumulocity.devices.DeviceService;
+using com.apama.cumulocity.devices.DevicePublisher;
+using com.apama.cumulocity.devices.DeviceMessage;
+using apama.analyticsbuilder.InputParams;
+using apama.analyticsbuilder.InputHandler;
+using apama.analyticsbuilder.Value;
+using apama.analyticsbuilder.Activation;
+
+event DeviceOutput_$Parameters {
+	string transport;
+	string topic;
+	string clientID;
+	action $validate() {
+		BlockBase.throwsOnEmpty(topic, "topic", self);
+		BlockBase.throwsOnEmpty(transport, "transport", self);
+	}
+}
+
+/** Device output message.
+
+  Sending to device transports such as MQTT Service.
+
+  @$blockCategory Output
+*/
+event DeviceOutput
+{
+	BlockBase $base;
+	DeviceOutput_$Parameters $parameters;
+	DevicePublisher producer;
+
+	/**
+	 * This action receives the input values and contains the logic of the block.
+	 *
+	 * @param $activation The current activation, contextual information required when generating a block output. Blocks should only use the
+	 * <tt>Activation</tt> object passed to them from the framework, never creating their own or holding on to an <tt>Activation</tt> object.
+	 * @param $input_value The base64-encoded payload to send to the device. Properties on this value will be sent as transportProperties.
+	 *
+	 * @$inputName value value
+	 */
+	action $process(Activation $activation, Value $input_value) {
+		log "DeviceOutput.$process: "+$input_value;
+		DeviceMessage msg := new DeviceMessage;
+		msg.transportID := $parameters.transport;
+		msg.topic := $parameters.topic;
+		msg.clientID := $parameters.clientID;
+		msg.transportProperties := $input_value.properties;
+		msg.payloadBase64 := $input_value.value;
+		log "Sending "+msg+" to "+producer.getSendChannel();
+		send msg to producer.getSendChannel();
+	}
+	action $init()
+	{
+		producer := DeviceService.connectPublisher($base.getTenantDetails().tenantId, $parameters.transport);
+		log "DeviceOutput initialized with producer: "+producer;
+	}
+}
