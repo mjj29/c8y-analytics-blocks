@@ -1,0 +1,34 @@
+package com.apama.cumulocity.devices;
+
+using com.apama.cumulocity.TenantDetails;
+using com.softwareag.connectivity.Chain;
+
+event DeviceConsumer
+{
+	action getSubscribeChannel() returns string
+	{
+		return "devicesubscribechannel"+i;
+	}
+	integer i;
+}
+
+event DevicePublisher
+{
+	action getSendChannel() returns string
+	{
+		return "devicesendchannel";
+	}
+}
+
+event DeviceService
+{
+	static action connectConsumers(string tenantId, string transport) returns sequence<DeviceConsumer>
+	{
+		return [DeviceConsumer(0), DeviceConsumer(1), DeviceConsumer(2)];
+	}
+	static action connectPublisher(string tenantId, string transport) returns DevicePublisher
+	{
+		return new DevicePublisher;
+	}
+}
+

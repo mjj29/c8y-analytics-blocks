@@ -5,96 +5,69 @@ using com.softwareag.connectivity.ExtraFieldsDict;
 using com.softwareag.connectivity.Chain;
 using com.softwareag.connectivity.ConnectivityPlugins;
 using com.apama.exceptions.Exception;
-using com.apama.cumulocity.mqttservice.MQTTService;
-using com.apama.cumulocity.mqttservice.MQTTSubscription;
-using com.apama.cumulocity.mqttservice.MQTTServiceMessage;
+using com.apama.cumulocity.devices.DeviceService;
+using com.apama.cumulocity.devices.DeviceConsumer;
+using com.apama.cumulocity.devices.DeviceMessage;
 using apama.analyticsbuilder.InputParams;
 using apama.analyticsbuilder.InputHandler;
 using apama.analyticsbuilder.Value;
 using apama.analyticsbuilder.Activation;
 
-event DeviceInputText_$Parameters {
+event DeviceInput_$Parameters {
+	string transport;
 	string topic;
 	action $validate() {
 		BlockBase.throwsOnEmpty(topic, "topic", self);
+		BlockBase.throwsOnEmpty(transport, "transport", self);
 	}
 }
 
-event MQTTConnectionRequest
-{
-	constant string SEND_CHANNEL := "MQTTConnectionCache_send";
-	string topic;
-}
-event MQTTConnectionResponse
-{
-	constant string RECEIVE_CHANNEL := "MQTTConnectionCache_receive";
-	string topic;
-}
-monitor MQTTConnectionCache
-{
-	dictionary<string, boolean> subscriptions;
-	action onload()
-	{
-		monitor.subscribe(MQTTConnectionRequest.SEND_CHANNEL);
-		on all MQTTConnectionRequest() as r {
-			if (subscriptions.hasKey(r.topic)) {
-				send MQTTConnectionResponse(r.topic) to MQTTConnectionResponse.RECEIVE_CHANNEL;
-			} else {
-				try {
-					Chain c := ConnectivityPlugins.getChainByChannel("receive"+r.topic, "TOWARDS_HOST");
-					subscriptions[r.topic] := true;
-					send MQTTConnectionResponse(r.topic) to MQTTConnectionResponse.RECEIVE_CHANNEL;
-				} catch (Exception e) {
-					MQTTService.createTextSubscription(r.topic, "deviceinputblock", created);
-				}
-			}
-		}
-	}
-	action created(MQTTSubscription sub)
-	{
-		subscriptions[sub.getTopic()] := true;
-		send MQTTConnectionResponse(sub.getTopic()) to MQTTConnectionResponse.RECEIVE_CHANNEL;
-	}
-}
+/** Device input message.
 
-/** MQTT Service Input Message - text format.
-  
+  Receiving from inbound transports such as MQTT Service.
+
+  The output is a base64-encoded string of the device payload. The properties contain the following keys: topic, clientID, transportProperties and transport.
+
   @$blockCategory Input
 */
-event DeviceInputText
+event DeviceInput
 {
 	BlockBase $base;
-	DeviceInputText_$Parameters $parameters;
+	DeviceInput_$Parameters $parameters;
 	InputHandler inputHandler;
 	constant string $OUTPUT_TYPE_value := "pulse";
 	action<Activation,Value> $setOutput_value;
 
 	action $validate() {
-		InputParams inputParams := InputParams.forEventType(MQTTServiceMessage.getName());
+		InputParams inputParams := InputParams.forEventType(DeviceMessage.getName()).withPartition("clientID");
 		inputHandler := $base.consumesInput(inputParams);
 	}
 	action $timerTriggered(Activation $activation, any $payload)
 	{
-		MQTTServiceMessage e := <MQTTServiceMessage> $payload;
+		DeviceMessage e := <DeviceMessage> $payload;
 		Value v := new Value;
-		v.value := e.data["textData"];
-		v.properties := e.properties;
+		v.value := e.payloadBase64;
+		v.properties := {
+			"topic": e.topic,
+			"clientID": e.clientID,
+			"transportProperties": e.transportProperties,
+			"transport": $parameters.transport
+		};
 		v.timestamp := $activation.timestamp;
 		$setOutput_value($activation, v);
 	}
 
-	action $init() 
+	action $init()
 	{
-		monitor.subscribe(MQTTConnectionResponse.RECEIVE_CHANNEL);
-		send MQTTConnectionRequest($parameters.topic) to MQTTConnectionRequest.SEND_CHANNEL;
-		on MQTTConnectionResponse(topic=$parameters.topic)
+		sequence<DeviceConsumer> consumers := DeviceService.connectConsumers($base.getTenantDetails().tenantId, $parameters.transport);
+		DeviceConsumer d;
+		for d in consumers
 		{
-			log "DeviceInputText: Subscription created for topic: " + $parameters.topic;
-			monitor.subscribe("receive"+$parameters.topic);
-			on all MQTTServiceMessage(topic=$parameters.topic) as msg
-			{
-				inputHandler.scheduleNow(msg, new any);
-			}
+			monitor.subscribe(d.getSubscribeChannel());
+		}
+		on all DeviceMessage(topic=$parameters.topic, transportID=$parameters.transport) as msg
+		{
+			inputHandler.scheduleNow(msg, msg.clientID);
 		}
 	}
 }

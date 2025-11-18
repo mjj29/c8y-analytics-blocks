@@ -14,8 +14,8 @@ class PySysTest(AnalyticsBuilderBaseTest):
 
 	def _injectCumulocitySupport(self, corr):
 		AnalyticsBuilderBaseTest._injectCumulocitySupport(self, corr)
-		self._injectEPLOnce(corr, [self.project.APAMA_HOME+'/monitors/'+i+'.mon' for i in ['TolerateAPI', 'cumulocity/Cumulocity_Rest_API', 'Notifications2.0Events', 'Notifications2.0Subscriptions', 'MQTTServiceEvents']])  
-		self._injectEPLOnce(corr, [self.project.testRootDir+'/utils/MQTTServiceMock.mon'])
+		self._injectEPLOnce(corr, [self.project.APAMA_HOME+'/monitors/'+i+'.mon' for i in ['DeviceService']])  
+		self._injectEPLOnce(corr, [self.project.testRootDir+'/utils/DeviceServiceMock.mon'])
 		self._injectEPLOnce(corr, [self.project.testRootDir+'/utils/ExternalMeasurementMock.mon'])
 
 	def execute(self):

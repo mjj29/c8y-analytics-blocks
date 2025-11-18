@@ -14,25 +14,26 @@ class PySysTest(AnalyticsBuilderBaseTest):
 
 	def _injectCumulocitySupport(self, corr):                                    
 		AnalyticsBuilderBaseTest._injectCumulocitySupport(self, corr)
-		self._injectEPLOnce(corr, [self.project.APAMA_HOME+'/monitors/'+i+'.mon' for i in ['TolerateAPI', 'cumulocity/Cumulocity_Rest_API', 'Notifications2.0Events', 'Notifications2.0Subscriptions', 'MQTTServiceEvents']])  
-		self._injectEPLOnce(corr, [self.project.testRootDir+'/utils/MQTTServiceMock.mon'])
-		self._injectEPLOnce(corr, [self.project.testRootDir+'/utils/MQTTServiceMock.mon'])
+		self._injectEPLOnce(corr, [self.project.APAMA_HOME+'/monitors/'+i+'.mon' for i in ['DeviceService']])  
+		self._injectEPLOnce(corr, [self.project.testRootDir+'/utils/DeviceServiceMock.mon'])
 
 	def execute(self):
 		self.correlator = self.startAnalyticsBuilderCorrelator(blockSourceDir=f'{self.project.SOURCE}/blocks/', arguments=["--config", f"{self.project.SOURCE}/blocks/Python/plugin.yaml"])
 		
-		self.modelId = self.createTestModel('apamax.analyticsbuilder.samples.DeviceInputText', {
+		self.modelId = self.createTestModel('apamax.analyticsbuilder.samples.DeviceInput', {
+			'transport': 'mqtt',
 			'topic': 'topicName',
 		}, id="model1")
 		
-		self.modelId2 = self.createTestModel('apamax.analyticsbuilder.samples.DeviceInputText', {
-			'topic': 'topicName',
-		}, id="model2")
-
-		self.waitForGrep('correlator.log', expr='DeviceInputText: Subscription created for topic')
-		
 		self.sendEventStrings(self.correlator, self.timestamp(1))
-		self.correlator.sendEventStrings('com.apama.cumulocity.mqttservice.MQTTServiceMessage("topicName", {"foo": any(string, "bar")}, {"textData":any(string, "{\\"t\\": 72.0 }")})', channel="receivetopicName")
+		# correct (first client)
+		self.correlator.sendEventStrings('com.apama.cumulocity.devices.DeviceMessage("mqtt","clientFoo","topicName",{},any(string,"SGVsbG8gV29ybGQ="))', channel="devicesubscribechannel0")
+		# wrong transport
+		self.correlator.sendEventStrings('com.apama.cumulocity.devices.DeviceMessage("badTransport","clientFoo","topicName",{},any(string,"SGVsbG8gV29ybGQ="))', channel="devicesubscribechannel0")
+		# wrong topic
+		self.correlator.sendEventStrings('com.apama.cumulocity.devices.DeviceMessage("mqtt","clientFoo","badTopic",{},any(string,"SGVsbG8gV29ybGQ="))', channel="devicesubscribechannel0")
+		# correct (second client)
+		self.correlator.sendEventStrings('com.apama.cumulocity.devices.DeviceMessage("mqtt","clientBar","topicName",{},any(string,"SGVsbG8gV29ybGQ="))', channel="devicesubscribechannel1")
 		self.sendEventStrings(self.correlator, self.timestamp(2))
 
 	def validate(self):
@@ -41,12 +42,12 @@ class PySysTest(AnalyticsBuilderBaseTest):
 		
 		# Verifying that the model is deployed successfully.
 		self.assertGrep(self.analyticsBuilderCorrelator.logfile, expr='Model \"' + self.modelId + '\" with PRODUCTION mode has started')
-		self.assertGrep(self.analyticsBuilderCorrelator.logfile, expr='Model \"' + self.modelId2 + '\" with PRODUCTION mode has started')
 
 		output = self.allOutputFromBlock(self.modelId)
-		self.assertThat("output == '{\"t\": 72.0 }'", output=output[0]['value'])
-		self.assertThat("output == {'foo': 'bar'}", output=output[0]['properties'])
-		output2 = self.allOutputFromBlock(self.modelId2)
-		self.assertThat("output == '{\"t\": 72.0 }'", output=output2[0]['value'])
-		self.assertThat("output == {'foo': 'bar'}", output=output2[0]['properties'])
+
+		self.assertThat("len(output) == 2", output=output)
+		self.assertThat("output[0]['value'] == 'SGVsbG8gV29ybGQ='", output=output)
+		self.assertThat("output[0]['properties'] == {'clientID': 'clientFoo', 'topic': 'topicName', 'transport': 'mqtt', 'transportProperties': {}}", output=output)
+		self.assertThat("output[1]['value'] == 'SGVsbG8gV29ybGQ='", output=output)
+		self.assertThat("output[1]['properties'] == {'clientID': 'clientBar', 'topic': 'topicName', 'transport': 'mqtt', 'transportProperties': {}}", output=output)
 	
