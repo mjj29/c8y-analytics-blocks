@@ -68,7 +68,11 @@ This block simulates a device producing arbitrary-format data by periodically ge
 
 ## Inbound Device Message block
 
-This block receives messages from MQTT service. The block outputs a single string containing the payload of the message. It may need to be decoded by a JSON decoder block and/or a Python expression block.
+This block receives messages from device connectivity services such as the MQTT service. The block outputs the message payload as a base64-encoded string, with the clientID and other properties in the properties
+
+## Outbound Device Message block
+
+This block sends messages to device connectivity services such as the MQTT service. The block takes the message payload as a base64-encoded string.
 
 ## Create External Measurement block
 
