@@ -16,7 +16,7 @@ using apama.analyticsbuilder.Activation;
 event DeviceOutput_$Parameters {
 	string transport;
 	string topic;
-	string clientID;
+	optional<string> clientID;
 	action $validate() {
 		BlockBase.throwsOnEmpty(topic, "topic", self);
 		BlockBase.throwsOnEmpty(transport, "transport", self);
@@ -49,7 +49,7 @@ event DeviceOutput
 		DeviceMessage msg := new DeviceMessage;
 		msg.transportID := $parameters.transport;
 		msg.topic := $parameters.topic;
-		msg.clientID := $parameters.clientID;
+		msg.clientID := $parameters.clientID.getOr("");
 		msg.transportProperties := $input_value.properties;
 		msg.payloadBase64 := $input_value.value;
 		log "Sending "+msg+" to "+producer.getSendChannel();
