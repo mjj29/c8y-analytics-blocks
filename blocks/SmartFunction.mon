@@ -53,6 +53,11 @@ event SmartFunction_$Parameters
 	 */
 	action $validate() {
 		chunk code := plugin.compileJS(smartFunction, 100000, 1000);
+		boolean defined := plugin.hasJSFunctionDefined(code, "onInput");
+		plugin.destroyJS(code);
+		if not defined {
+			throw com.apama.exceptions.Exception("smartFunction code does not define onInput", "ParseException");
+		}
 	}
 }
 
