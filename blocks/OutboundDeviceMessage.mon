@@ -45,19 +45,16 @@ event DeviceOutput
 	 * @$inputName value value
 	 */
 	action $process(Activation $activation, Value $input_value) {
-		log "DeviceOutput.$process: "+$input_value;
 		DeviceMessage msg := new DeviceMessage;
 		msg.transportID := $parameters.transport;
 		msg.topic := $parameters.topic;
 		msg.clientID := $parameters.clientID.getOr("");
 		msg.transportProperties := $input_value.properties;
 		msg.payloadBase64 := $input_value.value;
-		log "Sending "+msg+" to "+producer.getSendChannel();
 		send msg to producer.getSendChannel();
 	}
 	action $init()
 	{
 		producer := DeviceService.connectPublisher($base.getTenantDetails().tenantId, $parameters.transport);
-		log "DeviceOutput initialized with producer: "+producer;
 	}
 }
