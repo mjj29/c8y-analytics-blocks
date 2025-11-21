@@ -4,6 +4,15 @@ using com.apama.cumulocity.TenantDetails;
 using com.softwareag.connectivity.Chain;
 using com.apama.util.Base64;
 
+event DeviceMessage
+{
+	string transportID;
+	string clientID;
+	string topic;
+	dictionary<string, any> transportProperties;
+	any payloadBase64;
+}
+
 event DeviceConsumer
 {
 	action getSubscribeChannel() returns string

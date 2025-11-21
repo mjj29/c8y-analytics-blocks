@@ -14,7 +14,7 @@ class PySysTest(AnalyticsBuilderBaseTest):
 
 	def _injectCumulocitySupport(self, corr):
 		AnalyticsBuilderBaseTest._injectCumulocitySupport(self, corr)
-		self._injectEPLOnce(corr, [self.project.APAMA_HOME+'/monitors/'+i+'.mon' for i in ['DeviceService','Base64']])  
+		self._injectEPLOnce(corr, [self.project.APAMA_HOME+'/monitors/'+i+'.mon' for i in ['Base64']])  
 		self._injectEPLOnce(corr, [self.project.testRootDir+'/utils/DeviceServiceMock.mon'])
 		self._injectEPLOnce(corr, [self.project.testRootDir+'/utils/ExternalMeasurementMock.mon'])
 
