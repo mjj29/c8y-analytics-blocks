@@ -20,31 +20,22 @@ class PySysTest(AnalyticsBuilderBaseTest):
 		
 		self.modelId = self.createTestModel('apamax.analyticsbuilder.samples.Python', {
 			'label': 'Python Test Model',
-			'pythonFunction':"""import math, operator, json
+			'pythonFunction':"""import base64
 def onInput(inputs, context):
-	context.logger.info("Processing inputs: " + str([i.value for i in inputs]))
-	(a, b) = (inputs[0].value, inputs[1].value)
-	context.setState("counter", context.getState("counter", 0.) + 1.)
-	if a and b:
-		return [
-			math.fabs(a-b),
-			operator.sub(a, b),
-			Value(True, {'value1': inputs[0].properties['value1'], 'value2': inputs[1].properties['value2']}),
-			Value(context.getState("counter")),
-			json.dumps(inputs[0].properties)
-		]
-	else:
-		return None
+    # Decode the incoming message
+    raw = inputs[0].value
+    message = base64.b64decode(raw).decode("utf-8")
+    context.logger.info("Received message: "+ message)
+
+    # Encode the outgoing message
+    response = base64.b64encode(b"Response from Cumulocity").decode("utf-8")
+    return [response]
 """
 		})
 		
 		self.sendEventStrings(self.correlator,
 								self.timestamp(1),
-								self.inputEvent('value1', 12.25, id = self.modelId, properties={'value1': 'value'}),
-								self.timestamp(2),
-								self.inputEvent('value2', 7.75, id = self.modelId, properties={'value2': 'value'}),  #absolute Output at this point would be 4.5 (12.25-7.75)
-								self.timestamp(2.1),
-								self.inputEvent('value2', 17.25, id=self.modelId, properties={'value2': 'value'}),  #signed Output at this point would be -5 (12.25-17.25)
+								self.inputEvent('value1', 'SGVsbG8gV29ybGQ=', id = self.modelId, properties={'value1': 'value'}),
 								self.timestamp(2.5),
 							  )
 
