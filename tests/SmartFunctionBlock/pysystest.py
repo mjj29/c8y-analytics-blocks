@@ -21,20 +21,30 @@ class PySysTest(AnalyticsBuilderBaseTest):
 		self.modelId = self.createTestModel('apamax.analyticsbuilder.samples.SmartFunction', {
 			'label': 'JS Test Model',
 			'param1': '42',
-			'smartFunction':"""export function onInput(inputs, context) {
-    let message = Base64.decodeStr(inputs[0].value)
-    console.log("Received message: " + message)
-    return [Base64.encodeStr("Response from Cumulocity")];
-}"""
+			'smartFunction':"""export function onInput(inputs, ctx) {
+	console.log("Processing inputs");
+	ctx.setState("count", ctx.getState("count", 0) + 1);
+	if (inputs[0].value == null || inputs[1].value == null) {
+		return null;
+	} else {
+		return [inputs[0].value - inputs[1].value, {value: inputs[0].value - inputs[1].value}, {value: Number(ctx.blockParameters.param1), properties: { 'param1':ctx.blockParameters.param1, 'param2':ctx.blockParameters.param2, ...inputs[0].properties, ...inputs[1].properties}}, ctx.getState("count")];
+	}
+}
+"""
 		})
 		
 		self.sendEventStrings(self.correlator,
 								self.timestamp(1),
-								self.inputEvent('value1', "SGVsbG8gV29ybGQ=", id = self.modelId, properties={'value1': 'value'}),
+								self.inputEvent('value1', 12.25, id = self.modelId, properties={'value1': 'value'}),
 								self.timestamp(2),
+								self.inputEvent('value2', 7.75, id = self.modelId, properties={'value2': 'value'}),  #absolute Output at this point would be 4.5 (12.25-7.75)
+								self.timestamp(2.1),
+								self.inputEvent('value2', 17.25, id=self.modelId, properties={'value2': 'value'}),  #signed Output at this point would be -5 (12.25-17.25)
+								self.timestamp(2.5),
 							  )
 
 		self.correlator.flush()
+		self.correlator.delete(all=True)
 		self.correlator.shutdown()
 
 
