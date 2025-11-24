@@ -22,6 +22,25 @@ event Python_$Parameters
 	  */
 	optional<string> label;
 	/**
+	  * param1.
+	  *
+	  * An arbitrary parameter that can be templated into the Python code.
+	  */
+	optional<string> param1;
+	/**
+	  * param2.
+	  *
+	  * An arbitrary parameter that can be templated into the Python code.
+	  */
+	optional<string> param2;
+	/**
+	  * param3.
+	  *
+	  * An arbitrary parameter that can be templated into the Python code.
+	  */
+	optional<string> param3;
+
+	/**
 	 * Python function.
 	 *
 	 * The python code must define a function onInput that takes inputs and context as arguments and returns a list of outputs.
@@ -126,7 +145,7 @@ event Python
 			// If the python state is not initialized, we initialize it.
 			$blockState.python_state := plugin.createPythonState();
 		}
-		sequence<Value> results := plugin.execute(compiled_function, $blockState.python_state, [$input_value1, $input_value2, $input_value3, $input_value4, $input_value5]);
+		sequence<Value> results := plugin.execute(compiled_function, $blockState.python_state, $parameters, [$input_value1, $input_value2, $input_value3, $input_value4, $input_value5]);
 
 		if results.size()>0 {
 			integer i := 0;

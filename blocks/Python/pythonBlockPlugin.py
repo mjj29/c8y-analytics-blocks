@@ -3,9 +3,10 @@ from apama.eplplugin import EPLAction, EPLPluginBase, Event
 from RestrictedPython import compile_restricted, Eval, Guards, safe_builtins, limited_builtins, utility_builtins
 
 class Context(object):
-	def __init__(self, logger, state):
+	def __init__(self, logger, state, blockParameters):
 		self.logger = logger
 		self._state = state
+		self.blockParameters = blockParameters
 
 	def getState(self, key, default=None):
 		if key not in self._state:
@@ -92,10 +93,10 @@ class PythonBlockPlugin(EPLPluginBase):
 			raise Exception("The provided code does not define a callable onInput function")
 		return (onInput, globals)
 
-	@EPLAction("action<chunk, chunk, sequence<apama.analyticsbuilder.Value>> returns sequence<apama.analyticsbuilder.Value>")
-	def execute(self, code, state, inputs):
+	@EPLAction("action<chunk, chunk, apamax.analyticsbuilder.samples.Python_$Parameters, sequence<apama.analyticsbuilder.Value>> returns sequence<apama.analyticsbuilder.Value>")
+	def execute(self, code, state, properties, inputs):
 		(onInput, globals) = code
-		result = onInput([Value(x.fields['value'], x.fields['properties'], x.fields['timestamp']) for x in inputs], Context(self.getLogger(), state))
+		result = onInput([Value(x.fields['value'], x.fields['properties'], x.fields['timestamp']) for x in inputs], Context(self.getLogger(), state, properties.fields))
 		if result is None:
 			return []
 		else:

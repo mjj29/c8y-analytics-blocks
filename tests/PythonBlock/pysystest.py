@@ -11,7 +11,7 @@ from apamax.analyticsbuilder.basetest import AnalyticsBuilderBaseTest
 
 class PySysTest(AnalyticsBuilderBaseTest):
 
-	def preInjectBlock(self, corr):                                    
+	def preInjectBlock(self, corr):
 		self._injectEPLOnce(corr, [self.project.APAMA_HOME+'/monitors/'+i+'.mon' for i in ['Base64']])  
 		self._injectEPLOnce(corr, [self.project.testRootDir+'/utils/DeviceServiceMock.mon'])
 
@@ -20,6 +20,7 @@ class PySysTest(AnalyticsBuilderBaseTest):
 		
 		self.modelId = self.createTestModel('apamax.analyticsbuilder.samples.Python', {
 			'label': 'Python Test Model',
+			'param1': 'data',
 			'pythonFunction':"""import math, operator, json
 def onInput(inputs, context):
 	context.logger.info("Processing inputs: " + str([i.value for i in inputs]))
@@ -31,7 +32,7 @@ def onInput(inputs, context):
 			operator.sub(a, b),
 			Value(True, {'value1': inputs[0].properties['value1'], 'value2': inputs[1].properties['value2']}),
 			Value(context.getState("counter")),
-			json.dumps(inputs[0].properties)
+			context.blockParameters['param1']
 		]
 	else:
 		return None
@@ -62,6 +63,7 @@ def onInput(inputs, context):
 		self.assertBlockOutput('result1', [4.5, 5])
 		self.assertBlockOutput('result2', [4.5, -5])
 		self.assertBlockOutput('result4', [2, 3])
+		self.assertBlockOutput('result5', ["data", "data"])
 
 		self.assertThat("output == expected",
 						expected=[{'value1': 'value', 'value2': 'value'}, {'value1': 'value', 'value2': 'value'}],
