@@ -16,6 +16,9 @@ class Context(object):
 	def setState(self, key, value):
 		self._state[key] = value
 
+	def hasState(self, key):
+		return key in self._state
+
 
 class Value(object):
 	def __init__(self, value, properties={}, timestamp=0.0):

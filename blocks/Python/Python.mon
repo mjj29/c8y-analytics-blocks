@@ -76,8 +76,10 @@ event Python_$State
  * The context contains the following members/functions:
  <ul>
  <li>logger - A logger object that can be used to log messages.</li>
- <li>getState(key, default) - A function that can be used to get state between activations of the block.</li>
+ <li>getState(key, default=None) - A function that can be used to get state between activations of the block.</li>
  <li>setState(key, value) - A function that can be used to set state between activations of the block.</li>
+ <li>hasState(key) - A function that can be used to check if a state key exists.</li>
+ <li>blockParameters - A dictionary containing the block parameters (eg <tt>context.blockParameters['param1'])</tt>.</li>
  </ul>
 
  The return value of the function is a list of up to five values corresponding to the block outputs. These can either be bare values, or Value objects, with members value, properties and timestamp. If the function does not generate a value, return None instead.
