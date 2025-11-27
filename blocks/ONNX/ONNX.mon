@@ -1,0 +1,133 @@
+/*
+ * Copyright (c) 2013-present Cumulocity GmbH, Duesseldorf, Germany and/or its affiliates and/or their licensors.
+ * Use, reproduction, transfer, publication or disclosure is prohibited except as specifically provided for in your License Agreement with Cumulocity GmbH
+ */
+ 
+package apamax.analyticsbuilder.samples;
+
+using apama.analyticsbuilder.BlockBase;
+using apama.analyticsbuilder.Activation;
+using apama.analyticsbuilder.Value;
+
+/**
+ * Parameters for ONNX block.
+ */
+event ONNX_$Parameters
+{
+	import "ONNXBlockPlugin" as plugin;
+	/**
+	 * ONNX model file.
+	 *
+	 * The name of the ONNX model, which must have been deployed via an extension to the models directory.
+	 */
+	string onnxModelFile;
+}
+
+/**
+ * State for the ONNX block.
+ */
+event ONNX_$State
+{
+	chunk onnx_session;
+}
+
+/**
+ * ONNX
+ *
+ * Executes an ONNX model and returns the outputs.
+ *
+ * @$blockCategory Calculations
+ * @$derivedName $onnxModelFile
+ */
+event ONNX
+{
+	import "ONNXBlockPlugin" as plugin;
+	
+	/**BlockBase object.
+	 *
+	 * This is initialized by the framework when the block is required for a model.
+	 */
+	BlockBase $base;
+	
+	/** Block parameters, filled in by the framework. */
+	ONNX_$Parameters $parameters;
+
+	/** Setup the return vector */
+	action $init()
+	{
+		setOutput := [$setOutput_result1, $setOutput_result2, $setOutput_result3, $setOutput_result4, $setOutput_result5];
+	}
+
+	/**
+	 * This action receives the input values and contains the logic of the block. 
+	 *
+	 * @param $activation The current activation, contextual information required when generating a block output. Blocks should only use the
+	 * <tt>Activation</tt> object passed to them from the framework, never creating their own or holding on to an <tt>Activation</tt> object.
+	 * @param $input_value1 First input to the model.
+	 * @param $input_value2 Second input to the model.
+	 * @param $input_value3 Third input to the model.
+	 * @param $input_value4 Fourth input to the model.
+	 * @param $input_value5 Fifth input to the model.
+	 *
+	 * @$inputName value1 inputs[0]
+	 * @$inputName value2 inputs[1]
+	 * @$inputName value3 inputs[2]
+	 * @$inputName value4 inputs[3]
+	 * @$inputName value5 inputs[4]
+	 */
+	action $process(Activation $activation, Value $input_value1, Value $input_value2, Value $input_value3, Value $input_value4, Value $input_value5, ONNX_$State $blockState)
+	{
+		if $blockState.onnx_session.empty() {
+			// If the python state is not initialized, we initialize it.
+			$blockState.onnx_session := plugin.initState($parameters.onnxModelFile);
+		}
+		sequence<any> results := plugin.execute($blockState.onnx_session, [$input_value1.value, $input_value2.value, $input_value3.value, $input_value4.value, $input_value5.value]);
+
+		if results.size()>0 {
+			integer i := 0;
+			while i < results.size() and i < setOutput.size() {
+				Value v := new Value;
+				v.value := results[i];
+				setOutput[i]($activation, v);
+				i := i + 1;
+			}
+		}
+	}
+	
+	/**
+	 * outputs[0]
+	 *
+	 * This is the first output of the model.
+	 */
+	action<Activation,Value> $setOutput_result1;		// This is initialized by the framework. It sets the output of the block and may trigger any blocks connected to this output.
+	
+	/**
+	 * outputs[1]
+	 *
+	 * This is the second output of the model.
+	 */
+	action<Activation,Value> $setOutput_result2;	// This is initialized by the framework. It sets the output of the block and may trigger any blocks connected to this output.
+	
+	/**
+	 * outputs[2]
+	 *
+	 * This is the third output of the model.
+	 */
+	action<Activation,Value> $setOutput_result3;	// This is initialized by the framework. It sets the output of the block and may trigger any blocks connected to this output.
+	
+	/**
+	 * outputs[3]
+	 *
+	 * This is the fourth output of the model.
+	 */
+	action<Activation,Value> $setOutput_result4;	// This is initialized by the framework. It sets the output of the block and may trigger any blocks connected to this output.
+	
+	/**
+	 * outputs[4]
+	 *
+	 * This is the fifth output of the model.
+	 */
+	action<Activation,Value> $setOutput_result5;	// This is initialized by the framework. It sets the output of the block and may trigger any blocks connected to this output.
+
+	sequence<action<Activation,Value>> setOutput;
+}
