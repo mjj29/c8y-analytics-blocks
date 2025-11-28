@@ -23,23 +23,35 @@ event SmartFunction_$Parameters
 	  */
 	optional<string> label;
 	/**
-	  * param1.
+	  * param[0].
 	  *
 	  * An arbitrary parameter that can be templated into the Smart Function code.
 	  */
 	optional<string> param1;
 	/**
-	  * param2.
+	  * param[1].
 	  *
 	  * An arbitrary parameter that can be templated into the Smart Function code.
 	  */
 	optional<string> param2;
 	/**
-	  * param3.
+	  * param[2].
 	  *
 	  * An arbitrary parameter that can be templated into the Smart Function code.
 	  */
 	optional<string> param3;
+	/**
+	  * param[3].
+	  *
+	  * An arbitrary parameter that can be templated into the Smart Function code.
+	  */
+	optional<string> param4;
+	/**
+	  * param[4].
+	  *
+	  * An arbitrary parameter that can be templated into the Smart Function code.
+	  */
+	optional<string> param5;
 	/**
 	 * Smart Function.
 	 *
@@ -76,7 +88,7 @@ event SmartFunction_$State
  *
  * The Smart Function must export a function onInput that takes inputs and context as arguments and returns a list of outputs.
  *
- * The inputs are a list of five Value objects, with members value, properties and timestamp corresponding to the block inputs.
+ * The inputs are a list of ten Value objects, with members value, properties and timestamp corresponding to the block inputs.
  *
  * Context has the following methods:
  * <ul>
@@ -88,7 +100,7 @@ event SmartFunction_$State
  *
  * In addition, the console object has log, warn, error and debug members that can be used to log messages to the Analytics Builder log.
  *
- * The return value of the function is a list of up to five values corresponding to the block outputs. These can either be bare values, or Value objects, with members value, properties and timestamp. If the function does not generate a value, return null instead.
+ * The return value of the function is a list of up to ten values corresponding to the block outputs. These can either be bare values, or Value objects, with members value, properties and timestamp. If the function does not generate a value, return null instead.
  *
  * For example:
 <pre>
@@ -125,7 +137,7 @@ event SmartFunction
 	/** Setup the return vector. */
 	action $init()
 	{
-		setOutput := [$setOutput_result1, $setOutput_result2, $setOutput_result3, $setOutput_result4, $setOutput_result5];
+		setOutput := [$setOutput_result1, $setOutput_result2, $setOutput_result3, $setOutput_result4, $setOutput_result5,$setOutput_result6, $setOutput_result7, $setOutput_result8, $setOutput_result9, $setOutput_result10];
 		compiled_function := plugin.compileJS("export function __SmartFunction__makeState(params) {\n"+
 					"  const store = Object.create(null);\n"+
 					"  return {\n"+
@@ -151,19 +163,29 @@ event SmartFunction
 	 * @param $input_value3 Third input to the block.
 	 * @param $input_value4 Fourth input to the block.
 	 * @param $input_value5 Fifth input to the block.
+	 * @param $input_value6 Sixth input to the block.
+	 * @param $input_value7 Seventh input to the block.
+	 * @param $input_value8 Eigth input to the block.
+	 * @param $input_value9 Ninth input to the block.
+	 * @param $input_value10 Tenth input to the block.
 	 *
 	 * @$inputName value1 inputs[0]
 	 * @$inputName value2 inputs[1]
 	 * @$inputName value3 inputs[2]
 	 * @$inputName value4 inputs[3]
 	 * @$inputName value5 inputs[4]
+	 * @$inputName value6 inputs[5]
+	 * @$inputName value7 inputs[6]
+	 * @$inputName value8 inputs[7]
+	 * @$inputName value9 inputs[8]
+	 * @$inputName value10 inputs[9]
 	 */
-	action $process(Activation $activation, Value $input_value1, Value $input_value2, Value $input_value3, Value $input_value4, Value $input_value5, SmartFunction_$State $blockState)
+	action $process(Activation $activation, Value $input_value1, Value $input_value2, Value $input_value3, Value $input_value4, Value $input_value5, Value $input_value6, Value $input_value7, Value $input_value8, Value $input_value9, Value $input_value10, SmartFunction_$State $blockState)
 	{
 		if $blockState.js_state.empty() {
-			$blockState.js_state := plugin.createJSObject(compiled_function, "__SmartFunction__makeState", [<any>$parameters]);
+			$blockState.js_state := plugin.createJSObject(compiled_function, "__SmartFunction__makeState", [<any>[$parameters.param1, $parameters.param2, $parameters.param3, $parameters.param4, $parameters.param5]]);
 		}
-		any r := plugin.executeJS(compiled_function, "onInput", [[$input_value1, $input_value2, $input_value3, $input_value4, $input_value5], $blockState.js_state]);
+		any r := plugin.executeJS(compiled_function, "onInput", [[$input_value1, $input_value2, $input_value3, $input_value4, $input_value5, $input_value6, $input_value7, $input_value8, $input_value9, $input_value10], $blockState.js_state]);
 
 		if not r.empty() {
 			sequence<any> results := <sequence<any>> r;
@@ -238,6 +260,41 @@ event SmartFunction
 	 * This is the fifth output of the block.
 	 */
 	action<Activation,Value> $setOutput_result5;	// This is initialized by the framework. It sets the output of the block and may trigger any blocks connected to this output.
+
+	/**
+	 * outputs[5]
+	 *
+	 * This is the sixth output of the block.
+	 */
+	action<Activation,Value> $setOutput_result6;		// This is initialized by the framework. It sets the output of the block and may trigger any blocks connected to this output.
+	
+	/**
+	 * outputs[6]
+	 *
+	 * This is the seventh output of the block.
+	 */
+	action<Activation,Value> $setOutput_result7;	// This is initialized by the framework. It sets the output of the block and may trigger any blocks connected to this output.
+	
+	/**
+	 * outputs[7]
+	 *
+	 * This is the eigth output of the block.
+	 */
+	action<Activation,Value> $setOutput_result8;	// This is initialized by the framework. It sets the output of the block and may trigger any blocks connected to this output.
+	
+	/**
+	 * outputs[8]
+	 *
+	 * This is the ninth output of the block.
+	 */
+	action<Activation,Value> $setOutput_result9;	// This is initialized by the framework. It sets the output of the block and may trigger any blocks connected to this output.
+	
+	/**
+	 * outputs[9]
+	 *
+	 * This is the tenth output of the block.
+	 */
+	action<Activation,Value> $setOutput_result10;	// This is initialized by the framework. It sets the output of the block and may trigger any blocks connected to this output.
 
 	sequence<action<Activation,Value>> setOutput;
 	chunk compiled_function;

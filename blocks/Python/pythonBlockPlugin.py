@@ -6,7 +6,7 @@ class Context(object):
 	def __init__(self, logger, state, blockParameters):
 		self.logger = logger
 		self._state = state
-		self.blockParameters = blockParameters
+		self.blockParameters = [blockParameters['param1'], blockParameters['param2'], blockParameters['param3'], blockParameters['param4'], blockParameters['param5']]
 
 	def getState(self, key, default=None):
 		if key not in self._state:
