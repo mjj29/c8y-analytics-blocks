@@ -126,7 +126,19 @@ event SmartFunction
 	action $init()
 	{
 		setOutput := [$setOutput_result1, $setOutput_result2, $setOutput_result3, $setOutput_result4, $setOutput_result5];
-		compiled_function := plugin.compileJS($parameters.smartFunction, 100000, 1000);
+		compiled_function := plugin.compileJS("export function __SmartFunction__makeState(params) {\n"+
+					"  const store = Object.create(null);\n"+
+					"  return {\n"+
+					"    runtime: 'streaming-analytics',\n"+
+					"    getState(key, def = null) {\n"+
+					"      return key in store ? store[key] : def;\n"+
+					"    },\n"+
+					"    setState(key, value) {\n"+
+					"      store[key] = value;\n"+
+					"    },\n"+
+					"    blockParameters: params\n"+
+					"  };\n"+
+					"}\n"+$parameters.smartFunction, 100000, 1000);
 	}
 
 	/**
@@ -149,21 +161,7 @@ event SmartFunction
 	action $process(Activation $activation, Value $input_value1, Value $input_value2, Value $input_value3, Value $input_value4, Value $input_value5, SmartFunction_$State $blockState)
 	{
 		if $blockState.js_state.empty() {
-			chunk initCode := plugin.compileJS("export function makeState(params) {\n"+
-					"  const store = Object.create(null);\n"+
-					"  return {\n"+
-					"    runtime: 'streaming-analytics',\n"+
-					"    getState(key, def = null) {\n"+
-					"      return key in store ? store[key] : def;\n"+
-					"    },\n"+
-					"    setState(key, value) {\n"+
-					"      store[key] = value;\n"+
-					"    },\n"+
-					"    blockParameters: params\n"+
-					"  };\n"+
-					"}\n", 100000, 1000);
-			$blockState.js_state := plugin.createJSObject(initCode, "makeState", [<any>$parameters]);
-			plugin.destroyJS(initCode);
+			$blockState.js_state := plugin.createJSObject(compiled_function, "__SmartFunction__makeState", [<any>$parameters]);
 		}
 		any r := plugin.executeJS(compiled_function, "onInput", [[$input_value1, $input_value2, $input_value3, $input_value4, $input_value5], $blockState.js_state]);
 
