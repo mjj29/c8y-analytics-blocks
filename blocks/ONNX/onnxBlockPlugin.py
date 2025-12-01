@@ -1,6 +1,7 @@
 from apama.eplplugin import EPLAction, EPLPluginBase, Event
 import onnxruntime as ort
 import numpy as np
+import json
 
 class ONNXBlockPlugin(EPLPluginBase):
 
@@ -36,7 +37,9 @@ class ONNXBlockPlugin(EPLPluginBase):
 			elif isinstance(py, float):
 				np_array = np.array([py], dtype=np.float32)
 			elif isinstance(py, str):
-				np_array = np.array([py], dtype=np.object_)
+				# deserialize JSON string from py to numpy array
+				py_list = json.loads(py)
+				np_array = np.array(py_list, dtype=np.float32)
 			else:
 				raise Exception(f"Unsupported input type: {type(py)}")
 			feed[state["input_info"][i].name] = np_array

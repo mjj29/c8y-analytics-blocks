@@ -24,7 +24,7 @@ class PySysTest(AnalyticsBuilderBaseTest):
 		
 		self.sendEventStrings(self.correlator,
 								self.timestamp(1),
-								self.inputEvent('value1', 12.25, id = self.modelId, properties={'value1': 'value'}),
+								self.inputEvent('value1', "[12.25]", id = self.modelId, properties={'value1': 'value'}),
 								self.timestamp(2),
 								self.inputEvent('value2', 7.75, id = self.modelId, properties={'value2': 'value'}),
 								self.timestamp(2.1),
