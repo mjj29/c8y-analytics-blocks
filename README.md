@@ -60,7 +60,7 @@ This block allows you to query an AI agent configured in the AI Agent Manager as
 
 The block provides a parameter for the prompt to be used, which can be templated over the inputs to the block to tailor the prompt before its sent. The Agent output is produced as the block output as a string.
 
-This requires Streaming Analytics microservice v26.268.0 or later.
+This requires Streaming Analytics microservice v26.270.0 or later.
 
 ## ONNX block
 
