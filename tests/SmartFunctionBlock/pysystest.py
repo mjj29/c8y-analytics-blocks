@@ -27,7 +27,7 @@ class PySysTest(AnalyticsBuilderBaseTest):
 	if (inputs[0].value == null || inputs[1].value == null) {
 		return null;
 	} else {
-		return [inputs[0].value - inputs[1].value, {value: inputs[0].value - inputs[1].value}, {value: Number(ctx.blockParameters.param1), properties: { 'param1':ctx.blockParameters.param1, 'param2':ctx.blockParameters.param2, ...inputs[0].properties, ...inputs[1].properties}}, ctx.getState("count")];
+		return [inputs[0].value - inputs[1].value, {value: inputs[0].value - inputs[1].value}, {value: Number(ctx.blockParameters[0]), properties: { 'param1':ctx.blockParameters[0], 'param2':ctx.blockParameters[1], ...inputs[0].properties, ...inputs[1].properties}}, ctx.getState("count")];
 	}
 }
 """

@@ -32,7 +32,7 @@ def onInput(inputs, context):
 			operator.sub(a, b),
 			Value(True, {'value1': inputs[0].properties['value1'], 'value2': inputs[1].properties['value2']}),
 			Value(context.getState("counter")),
-			context.blockParameters['param1']
+			context.blockParameters[0]
 		]
 	else:
 		return None
