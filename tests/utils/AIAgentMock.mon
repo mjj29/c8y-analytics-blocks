@@ -1,0 +1,17 @@
+using com.softwareag.connectivity.httpclient.Request;
+using com.softwareag.connectivity.httpclient.Response;
+using com.softwareag.connectivity.httpclient.HttpOptions;
+using com.apama.util.AnyExtractor;
+
+monitor AIAgentMock {
+	action onload() {
+		spawn mock() to context("new");
+	}
+	action mock() {
+		monitor.subscribe("AI_Agent_Manager_Mock_Request");
+		on all Request() as r {
+			log "Handling AI Agent Mock Response";
+			send Response("GET", "/", AnyExtractor("20"), 200, "OK", new HttpOptions, r.id) to "AI_Agent_Manager_Mock_Response";
+		}
+	}
+}

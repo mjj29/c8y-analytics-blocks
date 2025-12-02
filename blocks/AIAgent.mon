@@ -1,0 +1,142 @@
+/*
+ * Copyright (c) 2013-present Cumulocity GmbH, Duesseldorf, Germany and/or its affiliates and/or their licensors.
+ * Use, reproduction, transfer, publication or disclosure is prohibited except as specifically provided for in your License Agreement with Cumulocity GmbH
+ */
+ 
+package apamax.analyticsbuilder.samples;
+
+using apama.analyticsbuilder.BlockBase;
+using apama.analyticsbuilder.Activation;
+using apama.analyticsbuilder.Value;
+using apama.analyticsbuilder.InputParams;
+using apama.analyticsbuilder.InputHandler;
+using com.apama.cumulocity.CumulocityRequestInterface;
+using com.softwareag.connectivity.httpclient.Request;
+using com.softwareag.connectivity.httpclient.Response;
+
+/**
+ * Parameters for AI Agent block.
+ */
+event AIAgent_$Parameters
+{
+	/**
+	  * Agent name.
+	  *
+	  * The agent to use in the AI Agent manager.
+	  */
+	string agentName;
+
+	/**
+	  * Prompt template.
+	  *
+	  * The prompt template to use when querying the agent. The block inputs will be mapped into this template
+	  * using variables like {{inputs[0]}}, {{inputs[1]}}, etc.
+	  */
+	string promptTemplate;
+}
+
+event ReqWrapper
+{
+	any partition;
+	InputHandler inputHandler;
+	action success(Response response)
+	{
+		log "AI Agent request succeeded with status code: " + response.statusCode;// at DEBUG
+		log "Response payload: " + response.payload.data.valueToString();// at DEBUG
+		inputHandler.scheduleNow(<string>response.payload.data, partition);
+		monitor.unsubscribe("AI_Agent_Manager_Mock_Response");
+	}
+	action fail(Response response)
+	{
+		log "AI Agent request failed with status code: " + response.statusCode at WARN;
+		log "Response payload: " + response.payload.data.valueToString();
+		monitor.unsubscribe("AI_Agent_Manager_Mock_Response");
+	}
+}
+
+/**
+  AI Agent Prompt.
+
+  This block queries an agent in the AI Agent manager with its inputs and produces the agent's response as output.
+
+	Note: This block produces its output in a new activation to its input. This means that if you wire this output
+	and the ones from any other blocks to a downstream block, those will be activated independently and not together.
+
+  * @$blockCategory Calculations
+  * @$derivedName $agentName
+  */
+event AIAgent
+{
+	BlockBase $base;
+	AIAgent_$Parameters $parameters;
+	CumulocityRequestInterface requestInterface;
+	InputHandler inputHandler;
+
+	action $init()
+	{
+		requestInterface := CumulocityRequestInterface.connectToCumulocity();
+	}
+	action $validate()
+	{
+		InputParams inputParams := InputParams.forEventType("string").withPartition("any");
+		inputHandler := $base.consumesInput(inputParams);
+	}
+	action $timerTriggered(Activation $activation, any $payload)
+	{
+		$setOutput_result($activation, <string>$payload);
+	}
+
+	/**
+	  * This action receives the input values and contains the logic of the block.
+	  *
+	  * @param $input_value1 The first input value.
+	  * @param $input_value2 The second input value.
+	  * @param $input_value3 The third input value.
+	  * @param $input_value4 The fourth input value.
+	  * @param $input_value5 The fifth input value.
+	  *
+	  * @$inputName value1 inputs[0]
+	  * @$inputName value2 inputs[1]
+	  * @$inputName value3 inputs[2]
+	  * @$inputName value4 inputs[3]
+	  * @$inputName value5 inputs[4]
+	  */
+	action $process(Activation $activation, Value $input_value1, Value $input_value2, Value $input_value3, Value $input_value4, Value $input_value5)
+	{
+		string replacedPrompt := $parameters.promptTemplate;
+		dictionary<string, string> variables := {};
+		if not $input_value1.value.empty() {
+			replacedPrompt := replacedPrompt.replaceAll("{{inputs[0]}}", $input_value1.value.valueToString());
+		}
+		if not $input_value2.value.empty() {
+			replacedPrompt := replacedPrompt.replaceAll("{{inputs[1]}}", $input_value2.value.valueToString());
+		}
+		if not $input_value3.value.empty() {
+			replacedPrompt := replacedPrompt.replaceAll("{{inputs[2]}}", $input_value3.value.valueToString());
+		}
+		if not $input_value4.value.empty() {
+			replacedPrompt := replacedPrompt.replaceAll("{{inputs[3]}}", $input_value4.value.valueToString());
+		}
+		if not $input_value5.value.empty() {
+			replacedPrompt := replacedPrompt.replaceAll("{{inputs[4]}}", $input_value5.value.valueToString());
+		}
+		dictionary<string, any> payloadDict := {
+			"prompt": replacedPrompt.replaceAll("\"", "\\\"")
+		};
+		log "Submitting AI Agent request with payload: " + payloadDict;// at DEBUG
+		Request req := requestInterface.createRequest("POST", "/service/ai/agent/text/" + $parameters.agentName, payloadDict);
+		log "Channel: '"+req.channel+"'";
+		req.setHeader("Content-Type", "application/json");
+		ReqWrapper wrap := ReqWrapper($activation.partition, inputHandler);
+		monitor.subscribe("AI_Agent_Manager_Mock_Response");
+		req.executeWithSeparateCallbacks(wrap.success, wrap.fail);
+		send req to "AI_Agent_Manager_Mock_Request";
+	}
+	/**
+	 * Result.
+	 *
+	 * The output value containing the AI agent's response.
+	 */
+	action<Activation,string> $setOutput_result;
+}
+

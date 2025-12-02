@@ -54,6 +54,20 @@ The TypeScript API for Smart Functions can be seen in [SmartFunction.ts](docs/Sm
 
 These blocks convert between a string value in encoded JSON form, to a decoded value sent in the output properties
 
+## AI Agent block
+
+This block allows you to query an AI agent configured in the AI Agent Manager as part of your model. You might, for example, use this to analyze identified unusual cases to better populate the alert that goes to field personel, by having your agent configured to query the Cumulocity MCP server and your set of maintenance manuals.
+
+The block provides a parameter for the prompt to be used, which can be templated over the inputs to the block to tailor the prompt before its sent. The Agent output is produced as the block output as a string.
+
+This requires Streaming Analytics microservice v26.270.0 or later.
+
+## ONNX block
+
+This block allows you to invoke ONNX models with the block inputs, and produce the results of the model as the output. You can use this to do inference on your data to identify anomolous conditions using AI models.
+
+The ONNX model currently must be provided as a .onnx file in the models directory via another custom extension. The block provides a simple 'add.onnx' model to demonstrate.
+
 ## Logger block
 
 This block will take an input and log it to the log file
