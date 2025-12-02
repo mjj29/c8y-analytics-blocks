@@ -28,6 +28,14 @@ event Logger_$Parameters
 	*/
 	string logLevel;
 	/**
+	 * Disable output.
+	 *
+	 * Enable this parameter to disable all output from this block
+	 * This can be templated using model parameters to disable logging
+	 * at runtime.
+	 */
+	optional<boolean> disableOutput;
+	/**
 	  INFO.
 	  
 	  Log the message at INFO.
@@ -77,7 +85,12 @@ event Logger
 	 *
 	 * @$inputName input A value to be logged.
 	 */
-	action $process(Activation $activation, Value $input_input) {
+	action $process(Activation $activation, Value $input_input)
+	{
+		if $parameters.disableOutput.getOr(false) {
+			// Output is disabled, do nothing.
+			return;
+		}
 
 		if $parameters.logLevel = $parameters.logLevel_ERROR {
 			// Log the message at ERROR. Will cause an alarm to be raised.
