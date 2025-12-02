@@ -19,16 +19,29 @@ class PySysTest(AnalyticsBuilderBaseTest):
 	def execute(self):
 		self.correlator = self.startAnalyticsBuilderCorrelator(blockSourceDir=f'{self.project.SOURCE}/blocks/', arguments=["--config", f"{self.project.SOURCE}/blocks/ONNX/onnx-plugin.yaml","--config", f"{self.project.SOURCE}/blocks/Python/python-plugin.yaml"])
 		
-		self.modelId = self.createTestModel('apamax.analyticsbuilder.samples.Logger', {
-			'loggerTag': 'thisBlock',
+		self.modelId1 = self.createTestModel('apamax.analyticsbuilder.samples.Logger', {
+			'loggerTag': 'implicitBlock',
 			'logLevel': 'INFO',
 		})
+		self.modelId2 = self.createTestModel('apamax.analyticsbuilder.samples.Logger', {
+			'loggerTag': 'explicitTrueBlock',
+			'logLevel': 'INFO',
+			'disableOutput': 'true',
+		})
+		self.modelId3 = self.createTestModel('apamax.analyticsbuilder.samples.Logger', {
+			'loggerTag': 'explicitFalseBlock',
+			'logLevel': 'INFO',
+			'disableOutput': 'false',
+		})
 		
+	
 		self.sendEventStrings(self.correlator,
 							  self.timestamp(1),
-							  self.inputEvent('input', 5, id = self.modelId),
+							  self.inputEvent('input', 5, id = self.modelId1),
 							  self.timestamp(2),
-							  self.inputEvent('input', "12345", id = self.modelId),
+							  self.inputEvent('input', "12345", id = self.modelId1),
+							  self.inputEvent('input', "12345", id = self.modelId2),
+							  self.inputEvent('input', "12345", id = self.modelId3),
 							  self.timestamp(3),
 							  )
 
@@ -38,7 +51,11 @@ class PySysTest(AnalyticsBuilderBaseTest):
 		self.checkLogs(errorIgnores=['Unknown dynamicChain', 'CumulocityRestAPIMonitor', 'CumulocityRequestInterface', 'Notifications2Subscriber'])
 		
 		# Verifying that the model is deployed successfully.
-		self.assertGrep(self.analyticsBuilderCorrelator.logfile, expr='Model \"' + self.modelId + '\" with PRODUCTION mode has started')
+		self.assertGrep(self.analyticsBuilderCorrelator.logfile, expr='Model \"' + self.modelId1 + '\" with PRODUCTION mode has started')
+		self.assertGrep(self.analyticsBuilderCorrelator.logfile, expr='Model \"' + self.modelId2 + '\" with PRODUCTION mode has started')
+		self.assertGrep(self.analyticsBuilderCorrelator.logfile, expr='Model \"' + self.modelId3 + '\" with PRODUCTION mode has started')
 	
-		self.assertGrep(self.analyticsBuilderCorrelator.logfile, expr=r'INFO.*\[thisBlock\] any\(float,5\) \(\{\}\)')
-		self.assertGrep(self.analyticsBuilderCorrelator.logfile, expr=r'INFO.*\[thisBlock\] any\(string,"12345"\) \(\{\}\)')
+		self.assertGrep(self.analyticsBuilderCorrelator.logfile, expr=r'INFO.*\[implicitBlock\] any\(float,5\) \(\{\}\)')
+		self.assertGrep(self.analyticsBuilderCorrelator.logfile, expr=r'INFO.*\[implicitBlock\] any\(string,"12345"\) \(\{\}\)')
+		self.assertGrep(self.analyticsBuilderCorrelator.logfile, expr=r'INFO.*\[explicitTrueBlock\] any\(string,"12345"\) \(\{\}\)', contains=False)
+		self.assertGrep(self.analyticsBuilderCorrelator.logfile, expr=r'INFO.*\[explicitFalseBlock\] any\(string,"12345"\) \(\{\}\)')
