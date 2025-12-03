@@ -31,8 +31,8 @@ class PySysTest(AnalyticsBuilderBaseTest):
 								self.timestamp(2),
 							  )
 
-		self.correlator.waitForLogGrep('AI Agent request (succeeded|failed)')
 		self.correlator.waitForLogGrep('Handling AI Agent Mock Response')
+		self.correlator.flush()
 
 
 	def validate(self):
