@@ -1,0 +1,90 @@
+/*
+ * Copyright (c) 2025-present Cumulocity GmbH, Duesseldorf, Germany and/or its affiliates and/or their licensors.
+ * Use, reproduction, transfer, publication or disclosure is prohibited except as specifically provided for in your License Agreement with Cumulocity GmbH
+ */
+ 
+package apamax.analyticsbuilder.samples;
+
+using apama.analyticsbuilder.BlockBase;
+using apama.analyticsbuilder.Activation;
+using apama.analyticsbuilder.Value;
+using com.apama.json.JSONPlugin;
+using com.apama.functional.Fn;
+
+event QuashMessages_$Parameters
+{
+	/**
+	  * Period.
+	  *
+	  * Time period in seconds.
+	  */
+	float period;
+	action $validate() {
+		if period <= 0. {
+			throw com.apama.exceptions.Exception("Period must be greater than zero.", "ParseException");
+		}
+	}
+}
+
+event QuashMessages_$State
+{
+	float lastActivationTime;
+	float quashedCount;
+}
+
+/**
+  * Quash frequent messages.
+  *
+  * If this block is activated more than once per specified time period, it will suppress the message.
+  *
+  * @$blockCategory Aggregates
+  */
+event QuashMessages
+{
+	/**BlockBase object.
+	 *
+	 * This is initialized by the framework when the block is required for a model.
+	 */
+	BlockBase $base;
+	QuashMessages_$Parameters $parameters;
+	
+	/**
+	 * This action receives the input values and contains the logic of the block. 
+	 *
+	 * @param $activation The current activation, contextual information required when generating a block output. Blocks should only use the
+	 * <tt>Activation</tt> object passed to them from the framework, never creating their own or holding on to an <tt>Activation</tt> object.
+	 * @param $input_input The input to be squashed
+	 *
+	 * @$inputName input Input
+	 */
+	action $process(Activation $activation, Value $input_input, QuashMessages_$State $blockState) {
+		float now := $activation.timestamp;
+		if (now - $blockState.lastActivationTime < $parameters.period) {
+			$blockState.quashedCount := $blockState.quashedCount + 1.;
+			$setOutput_squashedCount($activation, $blockState.quashedCount);
+			$setOutput_squashed($activation, $input_input);
+			return;
+		}
+		$setOutput_output($activation, $input_input);
+		$blockState.lastActivationTime := now;
+	}
+	
+	/**
+	 * Rate-squashed output.
+	 *
+	 * Input is output for the first activation in the specified time period; subsequent activations within that period are sent to the squashed output.
+	 */
+	action<Activation,Value> $setOutput_output;		// This is initialized by the framework. It sets the output of the block and may trigger any blocks connected to this output.
+	/**
+	 * Squashed message output.
+	 *
+	 * Input activations that occur more than once within the specified time period are sent to this output.
+	 */
+	action<Activation,Value> $setOutput_squashed;		// This is initialized by the framework. It sets the output of the block and may trigger any blocks connected to this output.
+	/**
+	 * Number of squashed messages.
+	 *
+	 * Incrememented every time a message is squashed.
+	 */
+	action<Activation,float> $setOutput_squashedCount;		// This is initialized by the framework. It sets the output of the block and may trigger any blocks connected to this output.
+}

@@ -72,6 +72,10 @@ The ONNX model currently must be provided as a .onnx file in the models director
 
 This block will take an input and log it to the log file
 
+## Rate Quash Block
+
+This block will cap the maximum rate that messages can be passed through, dropping anything that comes too frequently. Good for protecting expensive operations like querying LLMs
+
 ## Property Mapper block
 
 This block will take the input value and properties and allow you to map the fields to the output value and output properties
