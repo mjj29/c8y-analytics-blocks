@@ -1,4 +1,5 @@
-import collections, json, types
+import collections, json, types, os, subprocess, base64
+import http.client
 from apama.eplplugin import EPLAction, EPLPluginBase, Event
 from RestrictedPython import compile_restricted, Eval, Guards, safe_builtins, limited_builtins, utility_builtins
 
@@ -79,8 +80,19 @@ class PythonBlockPlugin(EPLPluginBase):
 			return PythonBlockPlugin.safe_modules[name]
 		raise ImportError(f"Import of module '{name}' is not allowed in restricted python block")
 
+	def install_requirements(self, requirements, requirementsDir):
+		os.makedirs(requirementsDir, exist_ok=True)
+		for package in requirements.split(" "):
+			try:
+				self.getLogger().info(f"Installing package '{package}' for python function block")
+				subprocess.check_call(["/usr/bin/env", "python3", "-m", "pip", "install", "--target", requirementsDir, package])
+				PythonBlockPlugin.safe_modules[package] = __import__(package)
+			except Exception as e:
+				self.getLogger().error(f"Failed to install package '{package}': {e}")
+
 	def __init__(self,init):
 		super(PythonBlockPlugin,self).__init__(init)
+		self.install_requirements(self.getConfig().get("requirements"), self.getConfig().get("requirementsDir"))
 
 	@EPLAction("action<> returns chunk")
 	def createPythonState(self):
