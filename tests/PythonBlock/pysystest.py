@@ -12,16 +12,16 @@ from apamax.analyticsbuilder.basetest import AnalyticsBuilderBaseTest
 class PySysTest(AnalyticsBuilderBaseTest):
 
 	def preInjectBlock(self, corr):
-		self._injectEPLOnce(corr, [self.project.APAMA_HOME+'/monitors/'+i+'.mon' for i in ['Base64']])  
+		self._injectEPLOnce(corr, [self.project.APAMA_HOME+'/monitors/'+i+'.mon' for i in ['Base64']])
 		self._injectEPLOnce(corr, [self.project.testRootDir+'/utils/DeviceServiceMock.mon'])
 
 	def execute(self):
-		self.correlator = self.startAnalyticsBuilderCorrelator(blockSourceDir=f'{self.project.SOURCE}/blocks/', arguments=["--config", f"{self.project.SOURCE}/blocks/ONNX/onnx-plugin.yaml","--config", f"{self.project.SOURCE}/blocks/Python/python-plugin.yaml"])
-		
+		self.correlator = self.startAnalyticsBuilderCorrelator(blockSourceDir=f'{self.project.SOURCE}/blocks/', arguments=["--config", f"{self.project.SOURCE}/blocks/ONNX/onnx-plugin.yaml","--config", f"{self.project.SOURCE}/blocks/Python/"])
+
 		self.modelId = self.createTestModel('apamax.analyticsbuilder.samples.Python', {
 			'label': 'Python Test Model',
 			'param1': 'data',
-			'pythonFunction':"""import math, operator, json
+			'pythonFunction':"""import math, operator, json, requests
 def onInput(inputs, context):
 	context.logger.info("Processing inputs: " + str([i.value for i in inputs]))
 	(a, b) = (inputs[0].value, inputs[1].value)

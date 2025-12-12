@@ -80,44 +80,19 @@ class PythonBlockPlugin(EPLPluginBase):
 			return PythonBlockPlugin.safe_modules[name]
 		raise ImportError(f"Import of module '{name}' is not allowed in restricted python block")
 
-	def install_requirements(self, requirementsDir):
-		C8Y_BASEURL = os.getenv("C8Y_BASEURL")
-		C8Y_TENANT = os.getenv("C8Y_TENANT")
-		C8Y_USER = os.getenv("C8Y_USER")
-		C8Y_PASSWORD = os.getenv("C8Y_PASSWORD")
-		if not all([C8Y_BASEURL, C8Y_TENANT, C8Y_USER, C8Y_PASSWORD]):
-			self.getLogger().warning("C8Y credentials not fully provided, skipping requirements installation")
-			return
-
-		path = "/tenant/options/pythonFunctionBlock"
-		host = C8Y_BASEURL.replace("https://", "").replace("http://", "")
-		try:
-			conn = http.client.HTTPSConnection(host) if C8Y_BASEURL.startswith("https://") else http.client.HTTPConnection(host)
-			headers = {
-				'Authorization': 'Basic ' + base64.b64encode(f"{C8Y_TENANT}/{C8Y_USER}:{C8Y_PASSWORD}".encode()).decode(),
-			}
-			conn.request("GET", path, headers=headers)
-			response = conn.getresponse()
-			if response.status == 200:
-				options = json.loads(response.read().decode())
-				self.getLogger().info(f"Fetched python function block options from C8Y: {options}")
-				requirements = options.get("requirements", [])
-				os.makedirs(requirementsDir, exist_ok=True)
-				for package in requirements.split(" "):
-					try:
-						self.getLogger().info(f"Installing package '{package}' for python function block")
-						subprocess.check_call(["/usr/bin/env", "python3", "-m", "pip", "install", "--target", requirementsDir, package])
-						PythonBlockPlugin.safe_modules[package] = __import__(package)
-					except Exception as e:
-						self.getLogger().error(f"Failed to install package '{package}': {e}")
-			else:
-				self.getLogger().warning(f"Failed to fetch python function block options from C8Y, status code: {response.status_code}")
-		except Exception as e:
-			self.getLogger().error(f"Error while fetching python function block options from C8Y: {e}")
+	def install_requirements(self, requirements, requirementsDir):
+		os.makedirs(requirementsDir, exist_ok=True)
+		for package in requirements.split(" "):
+			try:
+				self.getLogger().info(f"Installing package '{package}' for python function block")
+				subprocess.check_call(["/usr/bin/env", "python3", "-m", "pip", "install", "--target", requirementsDir, package])
+				PythonBlockPlugin.safe_modules[package] = __import__(package)
+			except Exception as e:
+				self.getLogger().error(f"Failed to install package '{package}': {e}")
 
 	def __init__(self,init):
 		super(PythonBlockPlugin,self).__init__(init)
-		self.install_requirements(self.getConfig().get("requirementsDir"))
+		self.install_requirements(self.getConfig().get("requirements"), self.getConfig().get("requirementsDir"))
 
 	@EPLAction("action<> returns chunk")
 	def createPythonState(self):
