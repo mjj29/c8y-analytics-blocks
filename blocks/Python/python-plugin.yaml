@@ -4,3 +4,6 @@ eplPlugins:
     class: PythonBlockPlugin
     pythonPath:
       - "${PARENT_DIR}/venv/lib/python3.9/site-packages"
+      - "${PARENT_DIR}/requirements"
+    config:
+      requirementsDir: "${PARENT_DIR}/requirements"
