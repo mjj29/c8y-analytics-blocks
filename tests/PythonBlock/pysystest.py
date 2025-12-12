@@ -16,7 +16,7 @@ class PySysTest(AnalyticsBuilderBaseTest):
 		self._injectEPLOnce(corr, [self.project.testRootDir+'/utils/DeviceServiceMock.mon'])
 
 	def execute(self):
-		self.correlator = self.startAnalyticsBuilderCorrelator(blockSourceDir=f'{self.project.SOURCE}/blocks/', arguments=["--config", f"{self.project.SOURCE}/blocks/ONNX/onnx-plugin.yaml","--config", f"{self.project.SOURCE}/blocks/Python/"])
+		self.correlator = self.startAnalyticsBuilderCorrelator(blockSourceDir=f'{self.project.SOURCE}/blocks/', arguments=["--config", f"{self.project.SOURCE}/blocks/ONNX/onnx-plugin.yaml","--config", f"{self.project.SOURCE}/blocks/Python/", "-Danalytics.builder.pythonBlockRequirements=requests"])
 
 		self.modelId = self.createTestModel('apamax.analyticsbuilder.samples.Python', {
 			'label': 'Python Test Model',
