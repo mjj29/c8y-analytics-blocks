@@ -16,12 +16,12 @@ class PySysTest(AnalyticsBuilderBaseTest):
 		self._injectEPLOnce(corr, [self.project.testRootDir+'/utils/DeviceServiceMock.mon'])
 
 	def execute(self):
-		self.correlator = self.startAnalyticsBuilderCorrelator(blockSourceDir=f'{self.project.SOURCE}/blocks/', arguments=["--config", f"{self.project.SOURCE}/blocks/ONNX/","--config", f"{self.project.SOURCE}/blocks/Python/", "-Danalytics.builder.pythonBlockRequirements=six", "-Danalytics.builder.pythonBlockPackages=six", '-v', 'plugins.PythonBlockPlugin=DEBUG'])
+		self.correlator = self.startAnalyticsBuilderCorrelator(blockSourceDir=f'{self.project.SOURCE}/blocks/', arguments=["--config", f"{self.project.SOURCE}/blocks/ONNX/","--config", f"{self.project.SOURCE}/blocks/Python/", "-Danalytics.builder.pythonBlockRequirements=six", "-Danalytics.builder.pythonBlockPackages=six xml xml.etree xml.etree.ElementTree", '-v', 'plugins.PythonBlockPlugin=DEBUG'])
 
 		self.modelId = self.createTestModel('apamax.analyticsbuilder.samples.Python', {
 			'label': 'Python Test Model',
 			'param1': 'data',
-			'pythonFunction':"""import math, operator, json, six
+			'pythonFunction':"import math, operator, json, six\nfrom base64 import b64encode, b64decode\nimport collections.abc\nfrom collections.abc import Iterable\nimport xml.etree#\nfrom xml import etree\nfrom xml.etree.ElementTree import Element"+"""
 def onInput(inputs, context):
 	context.logger.info("Processing inputs: " + str([i.value for i in inputs]))
 	(a, b) = (inputs[0].value, inputs[1].value)

@@ -38,47 +38,71 @@ class Value(object):
 class PythonBlockPlugin(EPLPluginBase):
 
 	safe_modules = {
-		"math": __import__("math"),
-		"functools": __import__("functools"),
-		"itertools": __import__("itertools"),
-		"copy": __import__("copy"),
-		"cmath": __import__("cmath"),
-		"decimal": __import__("decimal"),
-		"fractions": __import__("fractions"),
-		"numbers": __import__("numbers"),
-		"operator": __import__("operator"),
-		"collections": __import__("collections"),
-		"heapq": __import__("heapq"),
-		"bisect": __import__("bisect"),
-		"statistics": __import__("statistics"),
-		"array": __import__("array"),
-		"enum": __import__("enum"),
-		"typing": __import__("typing"),
-		"dataclasses": __import__("dataclasses"),
-		"string": __import__("string"),
-		"re": __import__("re"),
-		"textwrap": __import__("textwrap"),
-		"difflib": __import__("difflib"),
-		"unicodedata": __import__("unicodedata"),
-		"base64": __import__("base64"),
-		"binascii": __import__("binascii"),
-		"hashlib": __import__("hashlib"),
-		"hmac": __import__("hmac"),
-		"json": __import__("json"),
-		"time": __import__("time"),
-		"calendar": __import__("calendar"),
-		"uuid": __import__("uuid"),
-		"random": __import__("random"),
-		"secrets": __import__("secrets"),
+		"math": importlib.import_module("math"),
+		"functools": importlib.import_module("functools"),
+		"itertools": importlib.import_module("itertools"),
+		"copy": importlib.import_module("copy"),
+		"cmath": importlib.import_module("cmath"),
+		"decimal": importlib.import_module("decimal"),
+		"fractions": importlib.import_module("fractions"),
+		"numbers": importlib.import_module("numbers"),
+		"operator": importlib.import_module("operator"),
+		"collections": importlib.import_module("collections"),
+		"heapq": importlib.import_module("heapq"),
+		"bisect": importlib.import_module("bisect"),
+		"statistics": importlib.import_module("statistics"),
+		"array": importlib.import_module("array"),
+		"enum": importlib.import_module("enum"),
+		"typing": importlib.import_module("typing"),
+		"dataclasses": importlib.import_module("dataclasses"),
+		"string": importlib.import_module("string"),
+		"re": importlib.import_module("re"),
+		"textwrap": importlib.import_module("textwrap"),
+		"difflib": importlib.import_module("difflib"),
+		"unicodedata": importlib.import_module("unicodedata"),
+		"base64": importlib.import_module("base64"),
+		"binascii": importlib.import_module("binascii"),
+		"hashlib": importlib.import_module("hashlib"),
+		"hmac": importlib.import_module("hmac"),
+		"json": importlib.import_module("json"),
+		"time": importlib.import_module("time"),
+		"calendar": importlib.import_module("calendar"),
+		"uuid": importlib.import_module("uuid"),
+		"random": importlib.import_module("random"),
+		"secrets": importlib.import_module("secrets"),
 		"json": types.SimpleNamespace(loads=json.loads, dumps=json.dumps, JSONDecodeError=json.JSONDecodeError),
-		"csv": __import__("csv"),
+		"csv": importlib.import_module("csv"),
 	}
 
 	@staticmethod
 	def safe_import(name, globals=None, locals=None, fromlist=(), level=0):
-		if name in PythonBlockPlugin.safe_modules:
-			return PythonBlockPlugin.safe_modules[name]
-		raise ImportError(f"Import of module '{name}' is not allowed in restricted python block")
+		if not name:
+			raise ImportError("Empty module name not allowed in import")
+
+		parts = name.split(".")
+		top_level = parts[0]
+
+		if top_level not in PythonBlockPlugin.safe_modules:
+			raise ImportError(f"Import of module '{name}' is not allowed in restricted python block")
+
+		module = PythonBlockPlugin.safe_modules[top_level]
+
+		if fromlist:
+			prefix_len = 0
+			for i in range(len(parts), 0, -1):
+				prefix = ".".join(parts[:i])
+				if prefix in PythonBlockPlugin.safe_modules:
+					module = PythonBlockPlugin.safe_modules[prefix]
+					prefix_len = i
+					break
+
+			for part in parts[prefix_len:]:
+				if not hasattr(module, part):
+					raise ImportError(f"Module '{name}' has no attribute '{part}' in restricted python block")
+				module = getattr(module, part)
+
+		return module
+
 
 	def install_requirements(self, requirements, requirementsDir, packages):
 		os.makedirs(requirementsDir, exist_ok=True)
@@ -96,7 +120,7 @@ class PythonBlockPlugin(EPLPluginBase):
 			package = package.strip()
 			if not package:
 				continue
-			PythonBlockPlugin.safe_modules[package] = __import__(package)
+			PythonBlockPlugin.safe_modules[package] = importlib.import_module(package)
 
 	def __init__(self,init):
 		super(PythonBlockPlugin,self).__init__(init)
