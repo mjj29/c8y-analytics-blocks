@@ -48,7 +48,7 @@ class PySysTest(AnalyticsBuilderBaseTest):
 
 	def validate(self):
 		# Verifying that there are no errors in log file.
-		self.checkLogs(errorIgnores=['Unknown dynamicChain', 'CumulocityRestAPIMonitor', 'CumulocityRequestInterface', 'Notifications2Subscriber'])
+		self.checkLogs(errorIgnores=['Unknown dynamicChain', 'CumulocityRestAPIMonitor', 'CumulocityRequestInterface', 'Notifications2Subscriber'], warnIgnores=['Python path element does not exist'])
 		
 		# Verifying that the model is deployed successfully.
 		self.assertGrep(self.analyticsBuilderCorrelator.logfile, expr='Model \"' + self.modelId1 + '\" with PRODUCTION mode has started')
