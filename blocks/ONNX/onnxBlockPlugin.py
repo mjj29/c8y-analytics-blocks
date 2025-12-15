@@ -1,6 +1,4 @@
 from apama.eplplugin import EPLAction, EPLPluginBase, Event
-import onnxruntime as ort
-import numpy as np
 import json
 
 class ONNXBlockPlugin(EPLPluginBase):
@@ -10,6 +8,8 @@ class ONNXBlockPlugin(EPLPluginBase):
 
 	@EPLAction("action<string> returns chunk")
 	def initState(self, modelFile):
+		import onnxruntime as ort
+		import numpy as np
 		if ".." in modelFile:
 			raise Exception("Invalid model filename")
 		session = ort.InferenceSession(self.getConfig()["MODEL_DIR"] + "/" + modelFile)
@@ -22,6 +22,8 @@ class ONNXBlockPlugin(EPLPluginBase):
 
 	@EPLAction("action<chunk, sequence<any>> returns sequence<any>")
 	def execute(self, state, inputs):
+		import onnxruntime as ort
+		import numpy as np
 
 		for i in range(len(state["input_info"])):
 			# not all required inputs provided yet

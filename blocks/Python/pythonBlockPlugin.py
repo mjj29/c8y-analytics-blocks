@@ -92,7 +92,10 @@ class PythonBlockPlugin(EPLPluginBase):
 			self.getLogger().error(f"Failed to install package requirements: {e}")
 		self.getLogger().info(f"Permitting additional packages for python function block: {packages}")
 		importlib.invalidate_caches()
-		for package in packages.split(" "):
+		for package in packages.strip().split(" "):
+			package = package.strip()
+			if not package:
+				continue
 			PythonBlockPlugin.safe_modules[package] = __import__(package)
 
 	def __init__(self,init):
