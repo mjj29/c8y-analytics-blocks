@@ -1,4 +1,4 @@
-import collections, json, types, os, subprocess, base64
+import collections, json, types, os, subprocess, importlib
 import http.client
 from apama.eplplugin import EPLAction, EPLPluginBase, Event
 from RestrictedPython import compile_restricted, Eval, Guards, safe_builtins, limited_builtins, utility_builtins
@@ -80,19 +80,24 @@ class PythonBlockPlugin(EPLPluginBase):
 			return PythonBlockPlugin.safe_modules[name]
 		raise ImportError(f"Import of module '{name}' is not allowed in restricted python block")
 
-	def install_requirements(self, requirements, requirementsDir):
+	def install_requirements(self, requirements, requirementsDir, packages):
 		os.makedirs(requirementsDir, exist_ok=True)
-		for package in requirements.split(" "):
-			try:
-				self.getLogger().info(f"Installing package '{package}' for python function block")
-				subprocess.check_call(["/usr/bin/env", "python3", "-m", "pip", "install", "--target", requirementsDir, package])
-				PythonBlockPlugin.safe_modules[package] = __import__(package)
-			except Exception as e:
-				self.getLogger().error(f"Failed to install package '{package}': {e}")
+		with open(os.path.join(requirementsDir, "requirements.txt"), "w") as reqFile:
+			reqFile.write(requirements)
+		self.getLogger().info(f"Installing requirements for python function block")
+		self.getLogger().debug(f"Requirements:\n{requirements}")
+		try:
+			subprocess.check_call(["/usr/bin/env", "python3", "-m", "pip", "install", "--target", requirementsDir, "-r", os.path.join(requirementsDir, "requirements.txt")], timeout=120)
+		except Exception as e:
+			self.getLogger().error(f"Failed to install package requirements: {e}")
+		self.getLogger().info(f"Permitting additional packages for python function block: {packages}")
+		importlib.invalidate_caches()
+		for package in packages.split(" "):
+			PythonBlockPlugin.safe_modules[package] = __import__(package)
 
 	def __init__(self,init):
 		super(PythonBlockPlugin,self).__init__(init)
-		self.install_requirements(self.getConfig().get("requirements"), self.getConfig().get("requirementsDir"))
+		self.install_requirements(self.getConfig().get("requirements"), self.getConfig().get("requirementsDir"), self.getConfig().get("packages"))
 
 	@EPLAction("action<> returns chunk")
 	def createPythonState(self):

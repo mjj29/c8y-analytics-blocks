@@ -9,3 +9,4 @@ eplPlugins:
     config:
       requirementsDir: "${PARENT_DIR}/requirements"
       requirements: "${analytics.builder.pythonBlockRequirements}"
+      packages: "${analytics.builder.pythonBlockPackages}"
