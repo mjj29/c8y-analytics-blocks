@@ -12,16 +12,16 @@ from apamax.analyticsbuilder.basetest import AnalyticsBuilderBaseTest
 class PySysTest(AnalyticsBuilderBaseTest):
 
 	def preInjectBlock(self, corr):
-		self._injectEPLOnce(corr, [self.project.APAMA_HOME+'/monitors/'+i+'.mon' for i in ['Base64']])  
+		self._injectEPLOnce(corr, [self.project.APAMA_HOME+'/monitors/'+i+'.mon' for i in ['Base64']])
 		self._injectEPLOnce(corr, [self.project.testRootDir+'/utils/DeviceServiceMock.mon'])
 
 	def execute(self):
-		self.correlator = self.startAnalyticsBuilderCorrelator(blockSourceDir=f'{self.project.SOURCE}/blocks/', arguments=["--config", f"{self.project.SOURCE}/blocks/ONNX/onnx-plugin.yaml","--config", f"{self.project.SOURCE}/blocks/Python/python-plugin.yaml"])
-		
+		self.correlator = self.startAnalyticsBuilderCorrelator(blockSourceDir=f'{self.project.SOURCE}/blocks/', arguments=["--config", f"{self.project.SOURCE}/blocks/ONNX/","--config", f"{self.project.SOURCE}/blocks/Python/", "-Danalytics.builder.pythonBlockRequirements=six", "-Danalytics.builder.pythonBlockPackages=six xml xml.etree xml.etree.ElementTree", '-v', 'plugins.PythonBlockPlugin=DEBUG'])
+
 		self.modelId = self.createTestModel('apamax.analyticsbuilder.samples.Python', {
 			'label': 'Python Test Model',
 			'param1': 'data',
-			'pythonFunction':"""import math, operator, json
+			'pythonFunction':"import math, operator, json, six\nfrom base64 import b64encode, b64decode\nimport collections.abc\nfrom collections.abc import Iterable\nimport xml.etree#\nfrom xml import etree\nfrom xml.etree.ElementTree import Element"+"""
 def onInput(inputs, context):
 	context.logger.info("Processing inputs: " + str([i.value for i in inputs]))
 	(a, b) = (inputs[0].value, inputs[1].value)
@@ -52,7 +52,7 @@ def onInput(inputs, context):
 
 	def validate(self):
 		# Verifying that there are no errors in log file.
-		self.checkLogs(errorIgnores=['Unknown dynamicChain', 'CumulocityRestAPIMonitor', 'CumulocityRequestInterface', 'Notifications2Subscriber'])
+		self.checkLogs(errorIgnores=['Unknown dynamicChain', 'CumulocityRestAPIMonitor', 'CumulocityRequestInterface', 'Notifications2Subscriber'], warnIgnores=['Python path element does not exist'])
 		
 		# Verifying that the model is deployed successfully.
 		self.assertGrep(self.analyticsBuilderCorrelator.logfile, expr='Model \"' + self.modelId + '\" with PRODUCTION mode has started')
