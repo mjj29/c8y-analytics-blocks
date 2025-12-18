@@ -113,9 +113,9 @@ def onInput(inputs, context):<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;return None<br/>
 </pre>
  *
- * There is a safe default set of built-in libraries which can be imported. Additional libraries can be installed and made available using the analytics.builder.pythonBlockRequirements tenant option to provide a requirements.txt file and the analytics.builder.pythonBlockPackages to give a space-separated list of permitted imports.
+ * There is a safe default set of built-in libraries which can be imported. Additional libraries can be installed and made available using the streaminganalytics.pythonBlockRequirements tenant option to provide a requirements.txt file and the streaminganalytics.pythonBlockPackages to give a space-separated list of permitted imports.
  *
- * If your imports do not support being loaded multiple times in different sub-interpreters, you can set the analytics.builder.pythonBlockIsolation tenant option to 'none'.
+ * If your imports do not support being loaded multiple times in different sub-interpreters, you can set the streaminganalytics.pythonBlockIsolation tenant option to 'none'.
  *
  * @$blockCategory Calculations
  * @$derivedName $label
