@@ -160,6 +160,7 @@ PythonBlockPlugin.safe_globals = {
 			"Value": Value,
 			"_write_": Guards.full_write_guard,
 			"__import__": PythonBlockPlugin.safe_import,
+			"dict": dict,
 		}
 	}
 

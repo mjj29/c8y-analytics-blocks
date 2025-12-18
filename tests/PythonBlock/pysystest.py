@@ -18,7 +18,7 @@ class PySysTest(AnalyticsBuilderBaseTest):
 	def execute(self):
 		self.correlator = self.startAnalyticsBuilderCorrelator(blockSourceDir=f'{self.project.SOURCE}/blocks/', arguments=["--config", f"{self.project.SOURCE}/blocks/ONNX/","--config", f"{self.project.SOURCE}/blocks/Python/", "-Dstreaminganalytics.pythonBlockRequirements=six", "-Dstreaminganalytics.pythonBlockPackages=six xml xml.etree xml.etree.ElementTree", '-v', 'plugins.PythonBlockPlugin=DEBUG'])
 
-		self.modelId = self.createTestModel('apamax.analyticsbuilder.samples.Python', {
+		self.modelId1 = self.createTestModel('apamax.analyticsbuilder.samples.Python', {
 			'label': 'Python Test Model',
 			'param1': 'data',
 			'pythonFunction':"import math, operator, json, six\nfrom base64 import b64encode, b64decode\nimport collections.abc\nfrom collections.abc import Iterable\nimport xml.etree#\nfrom xml import etree\nfrom xml.etree.ElementTree import Element"+"""
@@ -38,24 +38,26 @@ def onInput(inputs, context):
 		return None
 """
 		})
+		self.modelId2 = self.createTestModel('apamax.analyticsbuilder.samples.Python', {})
 		
 		self.sendEventStrings(self.correlator,
 								self.timestamp(1),
-								self.inputEvent('value1', 12.25, id = self.modelId, properties={'value1': 'value'}),
+								self.inputEvent('value1', 12.25, id = self.modelId1, properties={'value1': 'value'}),
 								self.timestamp(2),
-								self.inputEvent('value2', 7.75, id = self.modelId, properties={'value2': 'value'}),  #absolute Output at this point would be 4.5 (12.25-7.75)
+								self.inputEvent('value2', 7.75, id = self.modelId1, properties={'value2': 'value'}),  #absolute Output at this point would be 4.5 (12.25-7.75)
 								self.timestamp(2.1),
-								self.inputEvent('value2', 17.25, id=self.modelId, properties={'value2': 'value'}),  #signed Output at this point would be -5 (12.25-17.25)
+								self.inputEvent('value2', 17.25, id=self.modelId1, properties={'value2': 'value'}),  #signed Output at this point would be -5 (12.25-17.25)
 								self.timestamp(2.5),
 							  )
 
 
 	def validate(self):
 		# Verifying that there are no errors in log file.
-		self.checkLogs(errorIgnores=['Unknown dynamicChain', 'CumulocityRestAPIMonitor', 'CumulocityRequestInterface', 'Notifications2Subscriber'], warnIgnores=['Python path element does not exist'])
+		self.checkLogs(errorIgnores=['Unknown dynamicChain', 'CumulocityRestAPIMonitor', 'CumulocityRequestInterface', 'Notifications2Subscriber', 'InvalidParameterException - Python function must be provided and cannot be the default placeholder'], warnIgnores=['Python path element does not exist', 'InvalidParameterException is not localized'])
+		self.assertGrep(self.analyticsBuilderCorrelator.logfile, expr='InvalidParameterException - Python function must be provided and cannot be the default placeholder')
 		
 		# Verifying that the model is deployed successfully.
-		self.assertGrep(self.analyticsBuilderCorrelator.logfile, expr='Model \"' + self.modelId + '\" with PRODUCTION mode has started')
+		self.assertGrep(self.analyticsBuilderCorrelator.logfile, expr='Model \"' + self.modelId1 + '\" with PRODUCTION mode has started')
 		
 		self.assertGrep(self.analyticsBuilderCorrelator.logfile, expr='Processing inputs')
 		
@@ -67,4 +69,4 @@ def onInput(inputs, context):
 
 		self.assertThat("output == expected",
 						expected=[{'value1': 'value', 'value2': 'value'}, {'value1': 'value', 'value2': 'value'}],
-						output=[x['properties'] for x in self.allOutputFromBlock(self.modelId) if x['outputId']=='result3'])
+						output=[x['properties'] for x in self.allOutputFromBlock(self.modelId1) if x['outputId']=='result3'])

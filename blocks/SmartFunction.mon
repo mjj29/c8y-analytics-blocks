@@ -60,10 +60,15 @@ event SmartFunction_$Parameters
 	 * @$semanticType pab_codeEditor_javascript
 	 */
 	string smartFunction;
+
+	constant string $DEFAULT_smartFunction := "export function onInput(inputs, context) {\n  return null;\n}\n";
 	/** 
 	 * This action is called by the framework to validate the parameters of the block. 
 	 */
 	action $validate() {
+		if smartFunction = $DEFAULT_smartFunction {
+			throw com.apama.exceptions.Exception("Smart function must be provided and cannot be the default placeholder.", "InvalidParameterException");
+		}
 		chunk code := plugin.compileJS(smartFunction, 100000, 1000);
 		boolean defined := plugin.hasJSFunctionDefined(code, "onInput");
 		plugin.destroyJS(code);
