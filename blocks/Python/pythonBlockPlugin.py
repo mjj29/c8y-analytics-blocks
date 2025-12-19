@@ -1,4 +1,4 @@
-import collections, json, types, os, subprocess, importlib
+import collections, json, types, os, subprocess, importlib, re
 import http.client
 from apama.eplplugin import EPLAction, EPLPluginBase, Event
 from RestrictedPython import compile_restricted, Eval, Guards, safe_builtins, limited_builtins, utility_builtins
@@ -117,7 +117,7 @@ class PythonBlockPlugin(EPLPluginBase):
 			self.getLogger().error(f"Failed to install package requirements: {e}")
 		self.getLogger().info(f"Permitting additional packages for python function block: {packages}")
 		importlib.invalidate_caches()
-		for package in packages.strip().split(" "):
+		for package in [p for p in re.split(r"[^A-Za-z0-9_.]+", packages) if p]:
 			package = package.strip()
 			if not package:
 				continue
@@ -150,23 +150,52 @@ class PythonBlockPlugin(EPLPluginBase):
 		else:
 			return [Event("apama.analyticsbuilder.Value", x._asdict() if isinstance(x, Value) else {"value":x, "properties":{}, "timestamp":0.0}) for x in result]
 
+def practical_write(*args):
+    if len(args) == 1:
+        # sometimes called with just a single sentinel or value
+        return args[0]
+
+    elif len(args) == 2:
+        # variable assignment: name, value
+        name, value = args
+        if isinstance(name, str) and name.startswith("_"):
+            raise TypeError(f"assignment to private variable {name} is forbidden")
+        globals()[name] = value
+        return value
+
+    elif len(args) == 3:
+        # attribute assignment: obj, name, value
+        obj, name, value = args
+        if isinstance(name, str) and name.startswith("_"):
+            raise TypeError(f"assignment to private attribute {name} is forbidden")
+        try:
+            setattr(obj, name, value)
+        except AttributeError:
+            # fallback for attribute-less objects (numpy scalars, pandas Index)
+            obj[name] = value
+        return value
+
+    else:
+        raise TypeError(f"unexpected number of arguments: {len(args)}")
+
+
 PythonBlockPlugin.safe_globals = {
-		"__builtins__": {**safe_builtins, **limited_builtins, **utility_builtins,
-			"__name__": "restricted_python_block",
-			"__metaclass__": type,
-			"_getiter_": Eval.default_guarded_getiter,
-			"_getitem_": Eval.default_guarded_getitem,
-			"_iter_unpack_sequence": Guards.guarded_iter_unpack_sequence,
-			"_unpack_sequence_": Guards.guarded_unpack_sequence,
-			"Value": Value,
-			"_write_": Guards.full_write_guard,
-			"__import__": PythonBlockPlugin.safe_import,
-			"dict": dict,
-			"map": map,
-			"filter": filter,
-			"enumerate": enumerate,
-			"reversed": reversed,
-		}
-	}
+   "__builtins__": {**safe_builtins, **limited_builtins, **utility_builtins,
+		"__import__": PythonBlockPlugin.safe_import,
+		"dict": dict,
+		"map": map,
+		"filter": filter,
+		"enumerate": enumerate,
+		"reversed": reversed,
+	},
+   "Value": Value,
+   "_getiter_": Eval.default_guarded_getiter,
+   "_getitem_": Eval.default_guarded_getitem,
+   "_iter_unpack_sequence": Guards.guarded_iter_unpack_sequence,
+   "_unpack_sequence_": Guards.guarded_unpack_sequence,
+   "_iter_unpack_sequence": Guards.guarded_iter_unpack_sequence,
+   "_unpack_sequence_": Guards.guarded_unpack_sequence,
+   "_write_": practical_write,
+}
 
 
