@@ -65,6 +65,7 @@ class PythonBlockPlugin(EPLPluginBase):
 		"hashlib": importlib.import_module("hashlib"),
 		"hmac": importlib.import_module("hmac"),
 		"json": importlib.import_module("json"),
+		"datetime": importlib.import_module("datetime"),
 		"time": importlib.import_module("time"),
 		"calendar": importlib.import_module("calendar"),
 		"uuid": importlib.import_module("uuid"),
@@ -161,6 +162,11 @@ PythonBlockPlugin.safe_globals = {
 			"_write_": Guards.full_write_guard,
 			"__import__": PythonBlockPlugin.safe_import,
 			"dict": dict,
+			"map": map,
+			"filter": filter,
+			"enumerate": enumerate,
+			"reversed": reversed,
 		}
 	}
+
 
