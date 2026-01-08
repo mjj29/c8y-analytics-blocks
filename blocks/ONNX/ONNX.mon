@@ -16,9 +16,9 @@ event ONNX_$Parameters
 {
 	import "ONNXBlockPlugin" as plugin;
 	/**
-	 * ONNX model file.
+	 * ONNX model name.
 	 *
-	 * The name of the ONNX model, which must have been deployed via an extension to the models directory.
+	 * The name of the ONNX model, which must have been deployed to the Files repository in ModelName.zip, containing ModelName.onnx.
 	 */
 	string onnxModelFile;
 }
@@ -52,10 +52,13 @@ event ONNX
 	/** Block parameters, filled in by the framework. */
 	ONNX_$Parameters $parameters;
 
+	string modelPath;
+
 	/** Setup the return vector */
 	action $init()
 	{
 		setOutput := [$setOutput_result1, $setOutput_result2, $setOutput_result3, $setOutput_result4, $setOutput_result5];
+		modelPath := plugin.downloadModel($parameters.onnxModelFile);
 	}
 
 	/**
@@ -79,7 +82,7 @@ event ONNX
 	{
 		if $blockState.onnx_session.empty() {
 			// If the python state is not initialized, we initialize it.
-			$blockState.onnx_session := plugin.initState($parameters.onnxModelFile);
+			$blockState.onnx_session := plugin.initState(modelPath);
 		}
 		sequence<any> results := plugin.execute($blockState.onnx_session, [$input_value1.value, $input_value2.value, $input_value3.value, $input_value4.value, $input_value5.value]);
 

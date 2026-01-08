@@ -66,7 +66,7 @@ This requires Streaming Analytics microservice v26.270.0 or later.
 
 This block allows you to invoke ONNX models with the block inputs, and produce the results of the model as the output. You can use this to do inference on your data to identify anomolous conditions using AI models.
 
-The ONNX model currently must be provided as a .onnx file in the models directory via another custom extension. The block provides a simple 'add.onnx' model to demonstrate.
+The ONNX model must be uploaded to the Cumulocity files repository, with the name ModelName.zip, containing ModelName.onnx and any other associated data files. Configure the block with ModelName to load the model.
 
 ## Logger block
 
