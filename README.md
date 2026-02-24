@@ -4,78 +4,21 @@ Custom community supported blocks for Cumulocity Analytics Builder
 This repo contains the following blocks
 
 ## Python function block
-
-This block allows function written in a restricted subset of python to be defined in an analytics builder model.
-
-For example:
-
-```python
-	import math
-	def onInput(inputs, context):
-		context.setState("counter", context.getState("counter", 0.) + 1.)
-		(a, b) = (inputs[0].value, inputs[1].value)
-		if a and b:
-			return [
-				math.fabs(a - b),
-				a - b,
-				context.getState("counter"),
-				Value(True, {'value1': inputs[0].properties['value1'], 'value2': inputs[1].properties['value2']}),
-			]
-		else:
-			return None
-```
-
+This block has been moved to https://github.com/Cumulocity-IoT/analytics-builder-blocks-contrib
 ## Smart Function block
-
-This block allows JS Smart Functions to be defined in an analytics builder model. It requires a Streaming Analytics microservice of at least version 26.252.0.
-
-For example:
-
-```javascript
-export function onInput(inputs, context) {
-	console.log("Processing inputs");
-	context.setState("counter", context.getState("counter", 0) + 1);
-	const [a, b] = [inputs[0].value, inputs[1].value];
-	if (a != null && b != null) {
-		return [
-			Math.abs(a - b),
-			a - b,
-			context.getState("counter"),
-			{value: a - b, properties: { ...inputs[0].properties, ...inputs[1].properties }}
-		];
-	}
-	return null;
-}
-```
-
-The TypeScript API for Smart Functions can be seen in [SmartFunction.ts](docs/SmartFunction.ts)
-
+This block has been added to the product
 ## JSON encoder/decoder blocks
 
 These blocks convert between a string value in encoded JSON form, to a decoded value sent in the output properties
 
 ## AI Agent block
-
-This block allows you to query an AI agent configured in the AI Agent Manager as part of your model. You might, for example, use this to analyze identified unusual cases to better populate the alert that goes to field personel, by having your agent configured to query the Cumulocity MCP server and your set of maintenance manuals.
-
-The block provides a parameter for the prompt to be used, which can be templated over the inputs to the block to tailor the prompt before its sent. The Agent output is produced as the block output as a string.
-
-This requires Streaming Analytics microservice v26.270.0 or later.
-
+This block has been added to the product
 ## ONNX block
-
-This block allows you to invoke ONNX models with the block inputs, and produce the results of the model as the output. You can use this to do inference on your data to identify anomolous conditions using AI models.
-
-The ONNX model must be uploaded to the Cumulocity files repository, with the name ModelName.zip, containing ModelName.onnx and any other associated data files. Configure the block with ModelName to load the model.
-
+This block has been added to the product
 ## Logger block
-
-This block will take an input and log it to the log file
-
+This block has been added to the product
 ## Rate Quash Block
-
-This block will cap the maximum rate that messages can be passed through, dropping anything that comes too frequently. Good for protecting expensive operations like querying LLMs
-
+This block has been added to the product as the RateLimiter block
 ## Property Mapper block
 
 This block will take the input value and properties and allow you to map the fields to the output value and output properties
@@ -85,9 +28,7 @@ This block will take the input value and properties and allow you to map the fie
 This block simulates a device producing arbitrary-format data by periodically generating the provided string into the model
 
 ## Inbound Device Message block
-
-This block receives messages from device connectivity services such as the MQTT service. The block outputs the message payload as a base64-encoded string, with the clientID and other properties in the properties. It requires a Streaming Analytics microservice of at least version 26.263.0.
-
+This block has been moved to https://github.com/Cumulocity-IoT/analytics-builder-blocks-contrib
 ## Outbound Device Message block
 
 This block sends messages to device connectivity services such as the MQTT service. The block takes the message payload as a base64-encoded string. It requires a Streaming Analytics microservice of at least version 26.263.0.

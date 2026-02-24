@@ -1,9 +1,0 @@
-eplPlugins:
-  ONNXBlockPlugin:
-    pythonFile: "${PARENT_DIR}/onnxBlockPlugin.py"
-    class: ONNXBlockPlugin
-    config:
-      MODEL_DIR: "${PARENT_DIR}/models"
-    isolation: none
-    pythonPath:
-      - "${PARENT_DIR}/venv/lib/python3.13/site-packages"
